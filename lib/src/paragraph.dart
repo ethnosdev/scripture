@@ -186,8 +186,7 @@ class RenderParagraph extends RenderBox
       // with mixed LTR/RTL lines, you might need to determine line breaks first
       // and then reverse the order of words within each line.
       // For this example, we'll reverse the X offset for each word.
-      RenderBox? rtlChild =
-          firstChild; // Use a different variable name to avoid confusion with the loop above
+      RenderBox? rtlChild = firstChild;
       while (rtlChild != null) {
         final childParentData = rtlChild.parentData! as ParagraphParentData;
         childParentData.offset = Offset(
