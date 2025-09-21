@@ -123,16 +123,18 @@ class RenderParagraph extends RenderBox
     double currentX = 0;
     double currentY = 0;
     double maxLineHeight = 0;
+    double actualContentWidth = 0;
+    double currentLineWidth = 0;
 
     RenderBox? child = firstChild;
 
     while (child != null) {
-      // Allow the child to lay itself out with unconstrained width,
-      // but constrained height if we want to respect it later.
-      // For words, we typically let them determine their own width.
       child.layout(
         BoxConstraints(
           minWidth: 0,
+          // When laying out words, we want them to take their intrinsic width,
+          // but we still pass the maxWidth to allow them to break if they are too wide
+          // (e.g., if a single word is wider than constraints.maxWidth).
           maxWidth: constraints.maxWidth,
           minHeight: 0,
           maxHeight: constraints.maxHeight,
@@ -146,28 +148,36 @@ class RenderParagraph extends RenderBox
       // Check if the word fits on the current line
       if (currentX + childWidth > constraints.maxWidth && currentX > 0) {
         // Doesn't fit, move to the next line
+        actualContentWidth = max(actualContentWidth, currentLineWidth);
         currentX = 0;
         currentY += maxLineHeight + lineSpacing;
         maxLineHeight = 0;
+        currentLineWidth = 0;
       }
 
       // Update max line height
       maxLineHeight = max(maxLineHeight, childHeight);
 
       // Set the position of the child
-      final ParagraphParentData childParentData =
-          child.parentData! as ParagraphParentData;
+      final childParentData = child.parentData! as ParagraphParentData;
       childParentData.offset = Offset(currentX, currentY);
 
       // Advance currentX
       currentX += childWidth + wordSpacing;
+      currentLineWidth += childWidth + wordSpacing;
 
       child = childParentData.nextSibling;
     }
 
+    // After the loop, account for the last line's width
+    actualContentWidth = max(
+      actualContentWidth,
+      currentLineWidth - wordSpacing,
+    );
+
     // Final height of the paragraph
     size = constraints.constrain(
-      Size(constraints.maxWidth, currentY + maxLineHeight),
+      Size(actualContentWidth, currentY + maxLineHeight),
     );
 
     // Now adjust for text direction if it's RTL
@@ -176,15 +186,15 @@ class RenderParagraph extends RenderBox
       // with mixed LTR/RTL lines, you might need to determine line breaks first
       // and then reverse the order of words within each line.
       // For this example, we'll reverse the X offset for each word.
-      child = firstChild;
-      while (child != null) {
-        final ParagraphParentData childParentData =
-            child.parentData! as ParagraphParentData;
+      RenderBox? rtlChild =
+          firstChild; // Use a different variable name to avoid confusion with the loop above
+      while (rtlChild != null) {
+        final childParentData = rtlChild.parentData! as ParagraphParentData;
         childParentData.offset = Offset(
-          constraints.maxWidth - childParentData.offset.dx - child.size.width,
+          actualContentWidth - childParentData.offset.dx - rtlChild.size.width,
           childParentData.offset.dy,
         );
-        child = childParentData.nextSibling;
+        rtlChild = childParentData.nextSibling;
       }
     }
   }
