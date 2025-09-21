@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scripture/scripture.dart';
 
-const textToDisplay = 'Hello world. How are you? Loooooooong';
-
 class Word {
   Word({required this.id, required this.text});
   final String id;
@@ -17,6 +15,11 @@ class ParagraphDemo extends StatefulWidget {
 }
 
 class _ParagraphDemoState extends State<ParagraphDemo> {
+  final textToDisplay =
+      'Now the earth was formless and void, '
+      'and darkness was over the surface of the deep. And the Spirit of God '
+      'was hovering over the surface of the waters.';
+
   List<Word> wordList = [];
 
   @override
@@ -34,25 +37,23 @@ class _ParagraphDemoState extends State<ParagraphDemo> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Paragraph Detail')),
-      body: Center(
-        child: Container(
-          decoration: BoxDecoration(border: Border.all(color: Colors.red)),
-          child: ParagraphWidget(
-            words: [
-              for (final word in wordList)
-                WordWidget(
-                  text: word.text,
-                  id: word.id,
-                  style: const TextStyle(fontSize: 24, color: Colors.black),
-                  onTap: (text, id) {
-                    _showMessage(context, 'Tap: "$text", id: $id');
-                  },
-                  onLongPress: (text, id) {
-                    _showMessage(context, 'Long press: "$text", id: $id');
-                  },
-                ),
-            ],
-          ),
+      body: Container(
+        decoration: BoxDecoration(border: Border.all(color: Colors.red)),
+        child: ParagraphWidget(
+          words: [
+            for (final word in wordList)
+              WordWidget(
+                text: word.text,
+                id: word.id,
+                style: const TextStyle(fontSize: 24, color: Colors.black),
+                onTap: (text, id) {
+                  _showMessage(context, 'Tap: "$text", id: $id');
+                },
+                onLongPress: (text, id) {
+                  _showMessage(context, 'Long press: "$text", id: $id');
+                },
+              ),
+          ],
         ),
       ),
     );
