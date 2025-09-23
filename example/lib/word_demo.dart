@@ -7,7 +7,7 @@ class WordDemo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Word Detail')),
+      appBar: AppBar(title: const Text('Word Demo')),
       body: Center(
         child: Container(
           decoration: BoxDecoration(border: Border.all(color: Colors.red)),

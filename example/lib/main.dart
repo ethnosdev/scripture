@@ -1,4 +1,5 @@
 import 'package:example/paragraph_demo.dart';
+import 'package:example/passage_demo.dart';
 import 'package:example/word_demo.dart';
 import 'package:flutter/material.dart';
 
@@ -43,6 +44,15 @@ class MenuScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => ParagraphDemo()),
+              );
+            },
+          ),
+          ListTile(
+            title: Text('PassageWidget'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => PassageDemo()),
               );
             },
           ),

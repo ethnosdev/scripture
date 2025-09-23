@@ -3,41 +3,51 @@ import 'package:scripture/scripture.dart';
 
 import 'word.dart';
 
-class ParagraphDemo extends StatefulWidget {
-  const ParagraphDemo({super.key});
+class PassageDemo extends StatefulWidget {
+  const PassageDemo({super.key});
 
   @override
-  State<ParagraphDemo> createState() => _ParagraphDemoState();
+  State<PassageDemo> createState() => _PassageDemoState();
 }
 
-class _ParagraphDemoState extends State<ParagraphDemo> {
-  final textToDisplay =
+class _PassageDemoState extends State<PassageDemo> {
+  final paragraph1 =
       'Now the earth was formless and void, '
       'and darkness was over the surface of the deep. And the Spirit of God '
       'was hovering over the surface of the waters.';
+  final paragraph2 =
+      'Thus the heavens and the earth were completed in all '
+      'their vast array. And by the seventh day God had finished the work He '
+      'had been doing; so on that day He rested from all His work.';
 
-  List<Word> wordList = [];
+  List<Word> p1Words = [];
+  List<Word> p2Words = [];
 
   @override
   void initState() {
     super.initState();
-    final words = textToDisplay.split(' ');
+    var words = paragraph1.split(' ');
 
     for (int i = 0; i < words.length; i++) {
       final word = words[i];
-      wordList.add(Word(id: i.toString(), text: word));
+      p1Words.add(Word(id: i.toString(), text: word));
+    }
+
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      p2Words.add(Word(id: i.toString(), text: word));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Paragraph Demo')),
+      appBar: AppBar(title: const Text('Passage Demo')),
       body: Container(
         decoration: BoxDecoration(border: Border.all(color: Colors.red)),
         child: ParagraphWidget(
           words: [
-            for (final word in wordList)
+            for (final word in p1Words)
               WordWidget(
                 text: word.text,
                 id: word.id,
