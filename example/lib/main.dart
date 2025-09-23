@@ -1,6 +1,6 @@
-import 'package:example/paragraph_demo.dart';
-import 'package:example/passage_demo.dart';
-import 'package:example/word_demo.dart';
+import 'package:example/demos/paragraph_demo.dart';
+import 'package:example/demos/passage_demo.dart';
+import 'package:example/demos/word_demo.dart';
 import 'package:flutter/material.dart';
 
 void main() {

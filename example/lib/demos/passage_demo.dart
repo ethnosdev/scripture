@@ -28,14 +28,19 @@ class _PassageDemoState extends State<PassageDemo> {
     super.initState();
     var words = paragraph1.split(' ');
 
-    for (int i = 0; i < words.length; i++) {
-      final word = words[i];
-      p1Words.add(Word(id: i.toString(), text: word));
-    }
+    int wordIndex = 0;
 
     for (int i = 0; i < words.length; i++) {
       final word = words[i];
-      p2Words.add(Word(id: i.toString(), text: word));
+      p1Words.add(Word(id: wordIndex.toString(), text: word));
+      wordIndex++;
+    }
+
+    words = paragraph2.split(' ');
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      p2Words.add(Word(id: wordIndex.toString(), text: word));
+      wordIndex++;
     }
   }
 
@@ -45,20 +50,41 @@ class _PassageDemoState extends State<PassageDemo> {
       appBar: AppBar(title: const Text('Passage Demo')),
       body: Container(
         decoration: BoxDecoration(border: Border.all(color: Colors.red)),
-        child: ParagraphWidget(
-          words: [
-            for (final word in p1Words)
-              WordWidget(
-                text: word.text,
-                id: word.id,
-                style: const TextStyle(fontSize: 24, color: Colors.black),
-                onTap: (text, id) {
-                  _showMessage(context, 'Tap: "$text", id: $id');
-                },
-                onLongPress: (text, id) {
-                  _showMessage(context, 'Long press: "$text", id: $id');
-                },
-              ),
+        child: PassageWidget(
+          paragraphSpacing: 20,
+          children: [
+            ParagraphWidget(
+              words: [
+                for (final word in p1Words)
+                  WordWidget(
+                    text: word.text,
+                    id: word.id,
+                    style: const TextStyle(fontSize: 24, color: Colors.black),
+                    onTap: (text, id) {
+                      _showMessage(context, 'Tap: "$text", id: $id');
+                    },
+                    onLongPress: (text, id) {
+                      _showMessage(context, 'Long press: "$text", id: $id');
+                    },
+                  ),
+              ],
+            ),
+            ParagraphWidget(
+              words: [
+                for (final word in p2Words)
+                  WordWidget(
+                    text: word.text,
+                    id: word.id,
+                    style: const TextStyle(fontSize: 24, color: Colors.black),
+                    onTap: (text, id) {
+                      _showMessage(context, 'Tap: "$text", id: $id');
+                    },
+                    onLongPress: (text, id) {
+                      _showMessage(context, 'Long press: "$text", id: $id');
+                    },
+                  ),
+              ],
+            ),
           ],
         ),
       ),
