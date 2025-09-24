@@ -46,8 +46,7 @@ class _PassageDemoState extends State<PassageDemo> {
 
   @override
   Widget build(BuildContext context) {
-    const baseStyle = TextStyle(fontSize: 24, color: Colors.black);
-    const verseNumberStyle = TextStyle(fontSize: 14, color: Colors.blueGrey);
+    const baseStyle = TextStyle(fontSize: 24, color: Colors.blueGrey);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Passage Demo')),
@@ -60,8 +59,7 @@ class _PassageDemoState extends State<PassageDemo> {
               children: [
                 VerseNumberWidget(
                   number: '2',
-                  style: verseNumberStyle,
-                  baseStyle: baseStyle,
+                  style: baseStyle,
                   padding: const EdgeInsets.only(right: 2.0),
                   onTap: (number) {
                     _showMessage(context, 'Tapped verse $number');
@@ -85,8 +83,7 @@ class _PassageDemoState extends State<PassageDemo> {
               children: [
                 VerseNumberWidget(
                   number: '3',
-                  style: verseNumberStyle,
-                  baseStyle: baseStyle,
+                  style: baseStyle,
                   padding: const EdgeInsets.only(right: 2.0),
                   onTap: (number) {
                     _showMessage(context, 'Tapped verse $number');

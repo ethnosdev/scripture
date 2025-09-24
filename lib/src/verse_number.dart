@@ -1,5 +1,3 @@
-// verse_number.dart
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -9,7 +7,7 @@ typedef VerseNumberCallback = void Function(String number);
 class VerseNumberWidget extends LeafRenderObjectWidget {
   final String number;
   final TextStyle style;
-  final TextStyle baseStyle; // Used to determine the widget's total height
+  final double scale;
   final EdgeInsets padding;
   final VerseNumberCallback? onTap;
   final VerseNumberCallback? onLongPress;
@@ -18,7 +16,7 @@ class VerseNumberWidget extends LeafRenderObjectWidget {
     super.key,
     required this.number,
     required this.style,
-    required this.baseStyle,
+    this.scale = 0.7,
     this.padding = EdgeInsets.zero,
     this.onTap,
     this.onLongPress,
@@ -29,7 +27,7 @@ class VerseNumberWidget extends LeafRenderObjectWidget {
     return RenderVerseNumber(
       number: number,
       style: style,
-      baseStyle: baseStyle,
+      scale: scale,
       padding: padding,
       onTap: onTap,
       onLongPress: onLongPress,
@@ -44,7 +42,7 @@ class VerseNumberWidget extends LeafRenderObjectWidget {
     renderObject
       ..number = number
       ..style = style
-      ..baseStyle = baseStyle
+      ..scale = scale
       ..padding = padding
       ..onTap = onTap
       ..onLongPress = onLongPress;
@@ -55,25 +53,20 @@ class RenderVerseNumber extends RenderBox {
   RenderVerseNumber({
     required String number,
     required TextStyle style,
-    required TextStyle baseStyle,
+    required double scale,
     required EdgeInsets padding,
     VerseNumberCallback? onTap,
     VerseNumberCallback? onLongPress,
   }) : _number = number,
        _style = style,
-       _baseStyle = baseStyle,
+       _scale = scale,
        _padding = padding,
        _onTap = onTap,
        _onLongPress = onLongPress {
-    _numberPainter = TextPainter(
-      text: TextSpan(text: _number, style: _style),
-      textDirection: TextDirection.ltr,
-    );
-    // Use a sample character to calculate the height of the base font.
-    _baseHeightPainter = TextPainter(
-      text: TextSpan(text: 'A', style: _baseStyle),
-      textDirection: TextDirection.ltr,
-    );
+    _numberPainter = TextPainter(textDirection: TextDirection.ltr);
+    _baseHeightPainter = TextPainter(textDirection: TextDirection.ltr);
+
+    _updatePainters();
 
     _tapRecognizer = TapGestureRecognizer()
       ..onTap = () {
@@ -101,7 +94,7 @@ class RenderVerseNumber extends RenderBox {
   set number(String value) {
     if (_number == value) return;
     _number = value;
-    _updateNumberPainter();
+    _updatePainters();
     markNeedsLayout();
   }
 
@@ -110,16 +103,16 @@ class RenderVerseNumber extends RenderBox {
   set style(TextStyle value) {
     if (_style == value) return;
     _style = value;
-    _updateNumberPainter();
+    _updatePainters();
     markNeedsLayout();
   }
 
-  TextStyle _baseStyle;
-  TextStyle get baseStyle => _baseStyle;
-  set baseStyle(TextStyle value) {
-    if (_baseStyle == value) return;
-    _baseStyle = value;
-    _updateBaseHeightPainter();
+  double _scale;
+  double get scale => _scale;
+  set scale(double value) {
+    if (_scale == value) return;
+    _scale = value;
+    _updatePainters();
     markNeedsLayout();
   }
 
@@ -155,12 +148,16 @@ class RenderVerseNumber extends RenderBox {
     };
   }
 
-  void _updateNumberPainter() {
-    _numberPainter.text = TextSpan(text: _number, style: _style);
+  /// Creates the derived style for the verse number.
+  TextStyle get _scaledStyle {
+    final baseFontSize = _style.fontSize ?? 14.0; // Provide a fallback.
+    return _style.copyWith(fontSize: baseFontSize * _scale);
   }
 
-  void _updateBaseHeightPainter() {
-    _baseHeightPainter.text = TextSpan(text: 'A', style: _baseStyle);
+  /// Updates both painters whenever a relevant property changes.
+  void _updatePainters() {
+    _numberPainter.text = TextSpan(text: _number, style: _scaledStyle);
+    _baseHeightPainter.text = TextSpan(text: 'A', style: _style);
   }
 
   @override
@@ -169,6 +166,7 @@ class RenderVerseNumber extends RenderBox {
     _baseHeightPainter.layout(minWidth: 0, maxWidth: constraints.maxWidth);
 
     final width = _padding.horizontal + _numberPainter.width;
+    // The widget's height is determined by the un-scaled base style.
     final height = _baseHeightPainter.height;
 
     size = Size(width, height);
@@ -176,15 +174,12 @@ class RenderVerseNumber extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    // The offset for the number is shifted by the left padding.
-    // The vertical alignment is at the top (y=0) by default, which is what we want.
     final numberOffset = offset + Offset(_padding.left, 0);
     _numberPainter.paint(context.canvas, numberOffset);
   }
 
   @override
   bool hitTestSelf(Offset position) {
-    // Hit test the entire box, including padding and full vertical height.
     return size.contains(position);
   }
 
