@@ -3,8 +3,6 @@ import 'dart:math';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-import 'word.dart';
-
 class ParagraphWidget extends MultiChildRenderObjectWidget {
   final TextDirection textDirection;
   final double wordSpacing;
@@ -12,11 +10,11 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
 
   const ParagraphWidget({
     super.key,
-    required List<WordWidget> words,
+    required List<Widget> children,
     this.textDirection = TextDirection.ltr,
     this.wordSpacing = 4.0,
     this.lineSpacing = 4.0,
-  }) : super(children: words);
+  }) : super(children: children);
 
   @override
   RenderObject createRenderObject(BuildContext context) {

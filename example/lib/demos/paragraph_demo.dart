@@ -36,7 +36,7 @@ class _ParagraphDemoState extends State<ParagraphDemo> {
       body: Container(
         decoration: BoxDecoration(border: Border.all(color: Colors.red)),
         child: ParagraphWidget(
-          words: [
+          children: [
             for (final word in wordList)
               WordWidget(
                 text: word.text,

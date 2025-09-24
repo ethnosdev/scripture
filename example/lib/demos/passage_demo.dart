@@ -46,6 +46,9 @@ class _PassageDemoState extends State<PassageDemo> {
 
   @override
   Widget build(BuildContext context) {
+    const baseStyle = TextStyle(fontSize: 24, color: Colors.black);
+    const verseNumberStyle = TextStyle(fontSize: 14, color: Colors.blueGrey);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Passage Demo')),
       body: Container(
@@ -54,7 +57,16 @@ class _PassageDemoState extends State<PassageDemo> {
           paragraphSpacing: 20,
           children: [
             ParagraphWidget(
-              words: [
+              children: [
+                VerseNumberWidget(
+                  number: '2',
+                  style: verseNumberStyle,
+                  baseStyle: baseStyle,
+                  padding: const EdgeInsets.only(right: 2.0),
+                  onTap: (number) {
+                    _showMessage(context, 'Tapped verse $number');
+                  },
+                ),
                 for (final word in p1Words)
                   WordWidget(
                     text: word.text,
@@ -70,7 +82,16 @@ class _PassageDemoState extends State<PassageDemo> {
               ],
             ),
             ParagraphWidget(
-              words: [
+              children: [
+                VerseNumberWidget(
+                  number: '3',
+                  style: verseNumberStyle,
+                  baseStyle: baseStyle,
+                  padding: const EdgeInsets.only(right: 2.0),
+                  onTap: (number) {
+                    _showMessage(context, 'Tapped verse $number');
+                  },
+                ),
                 for (final word in p2Words)
                   WordWidget(
                     text: word.text,
