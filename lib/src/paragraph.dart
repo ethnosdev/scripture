@@ -7,14 +7,18 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
   final TextDirection textDirection;
   final double wordSpacing;
   final double lineSpacing;
+  final double firstLineIndent;
+  final double subsequentLinesIndent;
 
   const ParagraphWidget({
     super.key,
-    required List<Widget> children,
+    required super.children,
     this.textDirection = TextDirection.ltr,
     this.wordSpacing = 4.0,
     this.lineSpacing = 4.0,
-  }) : super(children: children);
+    this.firstLineIndent = 0.0,
+    this.subsequentLinesIndent = 0.0,
+  });
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -22,6 +26,8 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
       textDirection: textDirection,
       wordSpacing: wordSpacing,
       lineSpacing: lineSpacing,
+      firstLineIndent: firstLineIndent,
+      subsequentLinesIndent: subsequentLinesIndent,
     );
   }
 
@@ -33,7 +39,9 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
     renderObject
       ..textDirection = textDirection
       ..wordSpacing = wordSpacing
-      ..lineSpacing = lineSpacing;
+      ..lineSpacing = lineSpacing
+      ..firstLineIndent = firstLineIndent
+      ..subsequentLinesIndent = subsequentLinesIndent;
   }
 }
 
@@ -45,9 +53,13 @@ class RenderParagraph extends RenderBox
     TextDirection textDirection = TextDirection.ltr,
     double wordSpacing = 4.0,
     double lineSpacing = 4.0,
+    double firstLineIndent = 0.0,
+    double subsequentLinesIndent = 0.0,
   }) : _textDirection = textDirection,
        _wordSpacing = wordSpacing,
-       _lineSpacing = lineSpacing;
+       _lineSpacing = lineSpacing,
+       _firstLineIndent = firstLineIndent,
+       _subsequentLinesIndent = subsequentLinesIndent;
 
   TextDirection _textDirection;
   TextDirection get textDirection => _textDirection;
@@ -73,6 +85,22 @@ class RenderParagraph extends RenderBox
     markNeedsLayout();
   }
 
+  double _firstLineIndent;
+  double get firstLineIndent => _firstLineIndent;
+  set firstLineIndent(double value) {
+    if (_firstLineIndent == value) return;
+    _firstLineIndent = value;
+    markNeedsLayout();
+  }
+
+  double _subsequentLinesIndent;
+  double get subsequentLinesIndent => _subsequentLinesIndent;
+  set subsequentLinesIndent(double value) {
+    if (_subsequentLinesIndent == value) return;
+    _subsequentLinesIndent = value;
+    markNeedsLayout();
+  }
+
   @override
   void setupParentData(RenderBox child) {
     if (child.parentData is! ParagraphParentData) {
@@ -82,7 +110,6 @@ class RenderParagraph extends RenderBox
 
   @override
   double computeMinIntrinsicWidth(double height) {
-    // The min intrinsic width is the width of the widest word.
     double maxWidth = 0.0;
     RenderBox? child = firstChild;
     while (child != null) {
@@ -91,12 +118,11 @@ class RenderParagraph extends RenderBox
           child.parentData! as ParagraphParentData;
       child = childParentData.nextSibling;
     }
-    return maxWidth;
+    return max(maxWidth, max(_firstLineIndent, _subsequentLinesIndent));
   }
 
   @override
   double computeMaxIntrinsicWidth(double height) {
-    // The max intrinsic width is the sum of all word widths plus spacing.
     double totalWidth = 0.0;
     RenderBox? child = firstChild;
     while (child != null) {
@@ -108,7 +134,8 @@ class RenderParagraph extends RenderBox
         totalWidth += wordSpacing;
       }
     }
-    return totalWidth;
+    // The max width is based on a single line, so we only need the first line indent.
+    return totalWidth + _firstLineIndent;
   }
 
   @override
@@ -118,39 +145,37 @@ class RenderParagraph extends RenderBox
       return;
     }
 
-    double currentX = 0;
+    double currentX = _firstLineIndent;
     double currentY = 0;
     double maxLineHeight = 0;
     double actualContentWidth = 0;
-    double currentLineWidth = 0;
 
     RenderBox? child = firstChild;
 
     while (child != null) {
       child.layout(
-        BoxConstraints(
-          minWidth: 0,
-          // When laying out words, we want them to take their intrinsic width,
-          // but we still pass the maxWidth to allow them to break if they are too wide
-          // (e.g., if a single word is wider than constraints.maxWidth).
-          maxWidth: constraints.maxWidth,
-          minHeight: 0,
-          maxHeight: constraints.maxHeight,
-        ),
+        BoxConstraints(maxWidth: constraints.maxWidth),
         parentUsesSize: true,
       );
 
       final double childWidth = child.size.width;
       final double childHeight = child.size.height;
+      final double currentLineIndent = (currentY == 0)
+          ? _firstLineIndent
+          : _subsequentLinesIndent;
 
-      // Check if the word fits on the current line
-      if (currentX + childWidth > constraints.maxWidth && currentX > 0) {
+      // Check if the word fits on the current line.
+      // We don't wrap if it's the very first word on a line, even if it overflows.
+      if (currentX > currentLineIndent &&
+          currentX + childWidth > constraints.maxWidth) {
         // Doesn't fit, move to the next line
-        actualContentWidth = max(actualContentWidth, currentLineWidth);
-        currentX = 0;
+        actualContentWidth = max(
+          actualContentWidth,
+          currentX - wordSpacing,
+        ); // Record width of completed line
+        currentX = _subsequentLinesIndent;
         currentY += maxLineHeight + lineSpacing;
         maxLineHeight = 0;
-        currentLineWidth = 0;
       }
 
       // Update max line height
@@ -162,7 +187,6 @@ class RenderParagraph extends RenderBox
 
       // Advance currentX
       currentX += childWidth + wordSpacing;
-      currentLineWidth += childWidth + wordSpacing;
 
       child = childParentData.nextSibling;
     }
@@ -170,7 +194,7 @@ class RenderParagraph extends RenderBox
     // After the loop, account for the last line's width
     actualContentWidth = max(
       actualContentWidth,
-      currentLineWidth - wordSpacing,
+      currentX - wordSpacing, // Subtract trailing space
     );
 
     // Final height of the paragraph
@@ -178,12 +202,8 @@ class RenderParagraph extends RenderBox
       Size(actualContentWidth, currentY + maxLineHeight),
     );
 
-    // Now adjust for text direction if it's RTL
+    // RTL adjustment remains the same, as it operates on the final calculated positions.
     if (_textDirection == TextDirection.rtl) {
-      // This is a simplified RTL adjustment. For a more robust solution
-      // with mixed LTR/RTL lines, you might need to determine line breaks first
-      // and then reverse the order of words within each line.
-      // For this example, we'll reverse the X offset for each word.
       RenderBox? rtlChild = firstChild;
       while (rtlChild != null) {
         final childParentData = rtlChild.parentData! as ParagraphParentData;
