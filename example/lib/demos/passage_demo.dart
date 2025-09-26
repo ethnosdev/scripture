@@ -48,7 +48,7 @@ class _PassageDemoState extends State<PassageDemo> {
     return Scaffold(
       appBar: AppBar(title: const Text('Passage Demo')),
       body: Container(
-        padding: const EdgeInsets.all(16.0),
+        // padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(border: Border.all(color: Colors.red)),
         child: PassageWidget(
           paragraphSpacing: 20,

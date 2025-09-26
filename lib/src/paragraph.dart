@@ -198,9 +198,7 @@ class RenderParagraph extends RenderBox
     );
 
     // Final height of the paragraph
-    size = constraints.constrain(
-      Size(actualContentWidth, currentY + maxLineHeight),
-    );
+    size = Size(actualContentWidth, currentY + maxLineHeight);
 
     // RTL adjustment remains the same, as it operates on the final calculated positions.
     if (_textDirection == TextDirection.rtl) {

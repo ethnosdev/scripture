@@ -137,7 +137,7 @@ class RenderPassage extends RenderBox
     }
 
     // The final size is the widest child's width and the total accumulated height.
-    size = constraints.constrain(Size(maxContentWidth, currentY));
+    size = Size(maxContentWidth, currentY);
   }
 
   @override
