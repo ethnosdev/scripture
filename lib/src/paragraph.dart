@@ -153,10 +153,12 @@ class RenderParagraph extends RenderBox
     RenderBox? child = firstChild;
 
     while (child != null) {
-      child.layout(
-        BoxConstraints(maxWidth: constraints.maxWidth),
-        parentUsesSize: true,
-      );
+      // Lay out the child with unconstrained width to get its intrinsic size.
+      // The Flutter framework is smart: if this child hasn't changed and it was
+      // already laid out with these same constraints (const BoxConstraints()),
+      // this call will return almost instantly without re-running the child's
+      // performLayout().
+      child.layout(const BoxConstraints(), parentUsesSize: true);
 
       final double childWidth = child.size.width;
       final double childHeight = child.size.height;
