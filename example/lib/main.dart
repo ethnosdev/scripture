@@ -1,5 +1,6 @@
 import 'package:example/demos/paragraph_demo.dart';
 import 'package:example/demos/passage_demo.dart';
+import 'package:example/demos/usfm_demo.dart';
 import 'package:example/demos/word_demo.dart';
 import 'package:flutter/material.dart';
 
@@ -53,6 +54,15 @@ class MenuScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => PassageDemo()),
+              );
+            },
+          ),
+          ListTile(
+            title: Text('USFM Demo'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UsfmDemo()),
               );
             },
           ),
