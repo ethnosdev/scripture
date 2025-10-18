@@ -1,13 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:scripture/src/paragraph.dart';
-import 'package:scripture/src/passage.dart';
-import 'package:scripture/src/verse_number.dart';
-import 'package:scripture/src/word.dart';
+import 'package:scripture/scripture.dart';
 import 'package:collection/collection.dart';
-
-import '../supplemental/paragraph_format.dart';
 
 class UsfmDemo extends StatefulWidget {
   const UsfmDemo({super.key});
@@ -29,23 +23,21 @@ class _UsfmDemoState extends State<UsfmDemo> {
     final usfm = await rootBundle.loadString('assets/01GENBSB.SFM');
     final paragraphs = _parseUsfm(usfm);
     setState(() {
-      _passage = _buildPassage(paragraphs);
+      _passage = buildPassageWidget(paragraphs);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('USFM Demo'),
-      ),
+      appBar: AppBar(title: const Text('USFM Demo')),
       body: SingleChildScrollView(
         child: _passage ?? const Center(child: CircularProgressIndicator()),
       ),
     );
   }
 
-  List<_UsfmParagraph> _parseUsfm(String usfm) {
+  List<UsfmParagraph> _parseUsfm(String usfm) {
     final lines = usfm.split('\n');
     final List<Map<String, dynamic>> rawParagraphs = [];
     Map<String, dynamic>? currentRawParagraph;
@@ -66,7 +58,9 @@ class _UsfmDemoState extends State<UsfmDemo> {
 
       final parts = trimmedLine.split(' ');
       final marker = parts.first.replaceFirst('\\', '');
-      final format = ParagraphFormat.values.firstWhereOrNull((e) => e.name == marker);
+      final format = ParagraphFormat.values.firstWhereOrNull(
+        (e) => e.name == marker,
+      );
 
       if (format != null) {
         currentRawParagraph = {'format': format, 'content': ''};
@@ -74,18 +68,18 @@ class _UsfmDemoState extends State<UsfmDemo> {
         currentRawParagraph['content'] = parts.sublist(1).join(' ');
       } else {
         if (currentRawParagraph != null) {
-          currentRawParagraph['content'] += ' ' + trimmedLine;
+          currentRawParagraph['content'] += ' $trimmedLine';
         }
       }
     }
 
     // Second pass: parse content of each paragraph
-    final List<_UsfmParagraph> paragraphs = [];
+    final List<UsfmParagraph> paragraphs = [];
     int verse = 0;
     int wordIndex = 0;
 
     for (final rawPara in rawParagraphs) {
-      final para = _UsfmParagraph(rawPara['format'], []);
+      final para = UsfmParagraph(format: rawPara['format'], content: []);
       paragraphs.add(para);
       final content = rawPara['content'] as String;
       final wordsAndMarkers = content.split(RegExp(r'\s+'));
@@ -104,58 +98,10 @@ class _UsfmDemoState extends State<UsfmDemo> {
           // ignore other markers
         } else if (item.isNotEmpty) {
           final id = '$chapter:$verse:${wordIndex++}';
-          para.content.add(Word(item, id));
+          para.content.add(Word(text: item, id: id));
         }
       }
     }
     return paragraphs;
   }
-
-  PassageWidget _buildPassage(List<_UsfmParagraph> paragraphs) {
-    const baseStyle = TextStyle(fontSize: 16, color: Colors.black);
-
-    return PassageWidget(
-      children: paragraphs.map((p) {
-        final List<Widget> children = p.content.map((item) {
-          if (item is Word) {
-            return WordWidget(
-              text: item.text,
-              id: item.id,
-              style: baseStyle,
-              onTap: (text, id) {
-                print('Tapped word: "$text" (id: $id)');
-              },
-            );
-          } else if (item is VerseNumber) {
-            return VerseNumberWidget(
-              number: item.number,
-              style: baseStyle,
-              scale: 0.7,
-              padding: const EdgeInsets.only(right: 4.0),
-            );
-          }
-          return Container();
-        }).toList();
-        return ParagraphWidget(children: children);
-      }).toList(),
-    );
-  }
-}
-
-class _UsfmParagraph {
-  final ParagraphFormat format;
-  final List<dynamic> content;
-
-  _UsfmParagraph(this.format, this.content);
-}
-
-class Word {
-  final String text;
-  final String id;
-  Word(this.text, this.id);
-}
-
-class VerseNumber {
-  final String number;
-  VerseNumber(this.number);
 }

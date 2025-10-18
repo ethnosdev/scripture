@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scripture/scripture.dart';
 
-import 'word.dart';
-
 class PassageDemo extends StatefulWidget {
   const PassageDemo({super.key});
 

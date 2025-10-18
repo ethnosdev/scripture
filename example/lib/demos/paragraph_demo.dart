@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scripture/scripture.dart';
 
-import 'word.dart';
-
 class ParagraphDemo extends StatefulWidget {
   const ParagraphDemo({super.key});
 
