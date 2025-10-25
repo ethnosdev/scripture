@@ -13,19 +13,26 @@ class UsfmDemo extends StatefulWidget {
 
 class _UsfmDemoState extends State<UsfmDemo> {
   PassageWidget? _passage;
+  bool _didLoadData = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadData();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didLoadData) {
+      _didLoadData = true;
+      _loadData();
+    }
   }
 
   Future<void> _loadData() async {
+    final themeTextStyle = Theme.of(context).textTheme.bodyMedium;
     final usfm = await rootBundle.loadString('assets/01GENBSB.SFM');
     final paragraphs = _parseUsfm(usfm);
-    setState(() {
-      _passage = buildPassageWidget(paragraphs);
-    });
+    if (mounted) {
+      setState(() {
+        _passage = buildPassageWidget(paragraphs, style: themeTextStyle!);
+      });
+    }
   }
 
   @override
