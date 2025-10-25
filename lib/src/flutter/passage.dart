@@ -98,6 +98,48 @@ class RenderPassage extends RenderBox
     return computeMinIntrinsicHeight(width);
   }
 
+  // @override
+  // void performLayout() {
+  //   if (firstChild == null) {
+  //     size = constraints.constrain(Size.zero);
+  //     return;
+  //   }
+
+  //   double currentY = 0.0;
+  //   double maxContentWidth = 0.0;
+  //   RenderBox? child = firstChild;
+
+  //   while (child != null) {
+  //     // Lay out each child (paragraph) with the incoming width constraint
+  //     // but unconstrained height.
+  //     child.layout(
+  //       constraints.copyWith(minHeight: 0, maxHeight: double.infinity),
+  //       parentUsesSize: true,
+  //     );
+
+  //     final childParentData = child.parentData! as PassageParentData;
+
+  //     // Position the child at the current vertical offset.
+  //     childParentData.offset = Offset(0, currentY);
+
+  //     // Update the max width seen so far.
+  //     maxContentWidth = max(maxContentWidth, child.size.width);
+
+  //     // Advance the vertical offset by the child's height.
+  //     currentY += child.size.height;
+
+  //     // Move to the next child and add spacing if it exists.
+  //     final nextChild = childParentData.nextSibling;
+  //     if (nextChild != null) {
+  //       currentY += paragraphSpacing;
+  //     }
+  //     child = nextChild;
+  //   }
+
+  //   // The final size is the widest child's width and the total accumulated height.
+  //   size = Size(maxContentWidth, currentY);
+  // }
+
   @override
   void performLayout() {
     if (firstChild == null) {
@@ -106,14 +148,15 @@ class RenderPassage extends RenderBox
     }
 
     double currentY = 0.0;
-    double maxContentWidth = 0.0;
+    // 1. Determine the width from the incoming constraints. This is the crucial change.
+    final double contentWidth = constraints.maxWidth;
     RenderBox? child = firstChild;
 
     while (child != null) {
-      // Lay out each child (paragraph) with the incoming width constraint
-      // but unconstrained height.
+      // 2. Lay out each child with a tight width constraint.
+      //    This tells the RenderParagraph to occupy the full available width.
       child.layout(
-        constraints.copyWith(minHeight: 0, maxHeight: double.infinity),
+        BoxConstraints.tightFor(width: contentWidth),
         parentUsesSize: true,
       );
 
@@ -121,9 +164,6 @@ class RenderPassage extends RenderBox
 
       // Position the child at the current vertical offset.
       childParentData.offset = Offset(0, currentY);
-
-      // Update the max width seen so far.
-      maxContentWidth = max(maxContentWidth, child.size.width);
 
       // Advance the vertical offset by the child's height.
       currentY += child.size.height;
@@ -136,8 +176,8 @@ class RenderPassage extends RenderBox
       child = nextChild;
     }
 
-    // The final size is the widest child's width and the total accumulated height.
-    size = Size(maxContentWidth, currentY);
+    // 3. The final size must use the constrained width and the calculated height.
+    size = Size(contentWidth, currentY);
   }
 
   @override

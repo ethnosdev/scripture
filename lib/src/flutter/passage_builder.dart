@@ -6,9 +6,10 @@ import 'passage.dart';
 import 'verse_number.dart';
 import 'word.dart';
 
-PassageWidget buildPassageWidget(List<UsfmParagraph> paragraphs) {
-  const baseStyle = TextStyle(fontSize: 16, color: Color(0xFF000000));
-
+PassageWidget buildPassageWidget(
+  List<UsfmParagraph> paragraphs, {
+  required TextStyle style,
+}) {
   final passageChildren = <ParagraphWidget>[];
   for (final paragraph in paragraphs) {
     final paragraphChildren = <Widget>[];
@@ -17,7 +18,7 @@ PassageWidget buildPassageWidget(List<UsfmParagraph> paragraphs) {
         final word = WordWidget(
           text: element.text,
           id: element.id,
-          style: baseStyle,
+          style: style,
           onTap: (text, id) {
             print('Tapped word: "$text" (id: $id)');
           },
@@ -26,7 +27,7 @@ PassageWidget buildPassageWidget(List<UsfmParagraph> paragraphs) {
       } else if (element is VerseNumber) {
         final verse = VerseNumberWidget(
           number: element.number,
-          style: baseStyle,
+          style: style,
           scale: 0.7,
           padding: const EdgeInsets.only(right: 4.0),
         );
