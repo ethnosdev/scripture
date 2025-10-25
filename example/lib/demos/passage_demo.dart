@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scripture/scripture.dart';
+import 'package:scripture/scripture_core.dart';
 
 class PassageDemo extends StatefulWidget {
   const PassageDemo({super.key});

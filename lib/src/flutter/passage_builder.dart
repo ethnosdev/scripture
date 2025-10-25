@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'models.dart';
+import '../core/models.dart';
 import 'paragraph.dart';
 import 'passage.dart';
 import 'verse_number.dart';

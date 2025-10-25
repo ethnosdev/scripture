@@ -1,9 +1,7 @@
 library;
 
-export 'src/word.dart';
-export 'src/paragraph.dart';
-export 'src/passage.dart';
-export 'src/verse_number.dart';
-export 'src/models.dart';
-export 'src/paragraph_format.dart';
-export 'src/passage_builder.dart';
+export 'src/flutter/word.dart';
+export 'src/flutter/paragraph.dart';
+export 'src/flutter/passage.dart';
+export 'src/flutter/verse_number.dart';
+export 'src/flutter/passage_builder.dart';

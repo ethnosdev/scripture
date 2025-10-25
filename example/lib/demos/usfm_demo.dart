@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:scripture/scripture.dart';
 import 'package:collection/collection.dart';
+import 'package:scripture/scripture_core.dart';
 
 class UsfmDemo extends StatefulWidget {
   const UsfmDemo({super.key});
