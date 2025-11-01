@@ -26,7 +26,36 @@ class UsfmParagraph extends PassageElement {
   UsfmParagraph({required this.content, required this.format});
 }
 
-class Passage {
-  final List<PassageElement> paragraphs;
-  Passage(this.paragraphs);
+// class Passage {
+//   final List<PassageElement> paragraphs;
+//   Passage(this.paragraphs);
+// }
+
+class UsfmPassage {
+  final List<UsfmParagraph> paragraphs;
+  UsfmPassage(this.paragraphs);
+
+  bool _isAppending = false;
+
+  void append(List<ParagraphElement> elements, ParagraphFormat format) {
+    if (!_isAppending ||
+        paragraphs.isEmpty ||
+        paragraphs.last.format != format) {
+      paragraphs.add(UsfmParagraph(content: elements, format: format));
+    } else {
+      paragraphs.last.content.addAll(elements);
+    }
+    _isAppending = true;
+  }
+
+  void commit([List<ParagraphElement>? elements, ParagraphFormat? format]) {
+    assert(
+      (elements != null && format != null) ||
+          (elements == null && format == null),
+    );
+    _isAppending = false;
+    if (elements != null && format != null) {
+      append(elements, format);
+    }
+  }
 }

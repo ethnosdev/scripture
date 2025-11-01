@@ -22,12 +22,18 @@ enum ParagraphFormat {
   li2('li2'),
 
   /// centered
+  ///
+  /// Example: MENE, MENE, TEKEL, PARSIN.
   pc('pc'),
 
   /// right aligned
+  ///
+  /// Example: Selah
   qr('qr'),
 
-  /// Descriptive Title (Psalms "Of David")
+  /// Descriptive Title
+  ///
+  /// Example: (Psalms "Of David")
   d('d'),
 
   /// Cross Reference

@@ -15,7 +15,7 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
     required super.children,
     this.textDirection = TextDirection.ltr,
     this.wordSpacing = 4.0,
-    this.lineSpacing = 4.0,
+    this.lineSpacing = 0.0,
     this.firstLineIndent = 0.0,
     this.subsequentLinesIndent = 0.0,
   });

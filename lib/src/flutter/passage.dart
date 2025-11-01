@@ -3,20 +3,18 @@ import 'dart:math';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-import 'paragraph.dart';
-
 class PassageWidget extends MultiChildRenderObjectWidget {
-  final double paragraphSpacing;
+  // final double paragraphSpacing;
 
   const PassageWidget({
     super.key,
-    required List<ParagraphWidget> children,
-    this.paragraphSpacing = 8.0,
-  }) : super(children: children);
+    required super.children,
+    // this.paragraphSpacing = 8.0,
+  });
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return RenderPassage(paragraphSpacing: paragraphSpacing);
+    return RenderPassage();
   }
 
   @override
@@ -24,7 +22,7 @@ class PassageWidget extends MultiChildRenderObjectWidget {
     BuildContext context,
     covariant RenderPassage renderObject,
   ) {
-    renderObject.paragraphSpacing = paragraphSpacing;
+    // renderObject.paragraphSpacing = paragraphSpacing;
   }
 }
 
@@ -32,16 +30,16 @@ class RenderPassage extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, PassageParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, PassageParentData> {
-  RenderPassage({double paragraphSpacing = 8.0})
-    : _paragraphSpacing = paragraphSpacing;
+  // RenderPassage({double paragraphSpacing = 8.0})
+  //   : _paragraphSpacing = paragraphSpacing;
 
-  double _paragraphSpacing;
-  double get paragraphSpacing => _paragraphSpacing;
-  set paragraphSpacing(double value) {
-    if (_paragraphSpacing == value) return;
-    _paragraphSpacing = value;
-    markNeedsLayout();
-  }
+  // double _paragraphSpacing;
+  // double get paragraphSpacing => _paragraphSpacing;
+  // set paragraphSpacing(double value) {
+  //   if (_paragraphSpacing == value) return;
+  //   _paragraphSpacing = value;
+  //   markNeedsLayout();
+  // }
 
   @override
   void setupParentData(RenderBox child) {
@@ -85,9 +83,9 @@ class RenderPassage extends RenderBox
       final childParentData = child.parentData! as PassageParentData;
       child = childParentData.nextSibling;
       // Add spacing if there's another paragraph to follow
-      if (child != null) {
-        totalHeight += paragraphSpacing;
-      }
+      // if (child != null) {
+      //   totalHeight += paragraphSpacing;
+      // }
     }
     return totalHeight;
   }
@@ -170,9 +168,9 @@ class RenderPassage extends RenderBox
 
       // Move to the next child and add spacing if it exists.
       final nextChild = childParentData.nextSibling;
-      if (nextChild != null) {
-        currentY += paragraphSpacing;
-      }
+      // if (nextChild != null) {
+      //   currentY += paragraphSpacing;
+      // }
       child = nextChild;
     }
 

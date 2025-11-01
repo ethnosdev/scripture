@@ -50,7 +50,7 @@ class _PassageDemoState extends State<PassageDemo> {
         // padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(border: Border.all(color: Colors.red)),
         child: PassageWidget(
-          paragraphSpacing: 20,
+          // paragraphSpacing: 20,
           children: [
             // Example 1: Standard paragraph indent
             ParagraphWidget(
@@ -74,6 +74,7 @@ class _PassageDemoState extends State<PassageDemo> {
                   ),
               ],
             ),
+            const SizedBox(height: 20),
             // Example 2: Hanging indent
             ParagraphWidget(
               subsequentLinesIndent: 40.0,
