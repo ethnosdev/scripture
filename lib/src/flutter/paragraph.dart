@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 
 class ParagraphWidget extends MultiChildRenderObjectWidget {
   final TextDirection textDirection;
-  final double wordSpacing;
+
   final double lineSpacing;
   final double firstLineIndent;
   final double subsequentLinesIndent;
@@ -14,7 +14,6 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
     super.key,
     required super.children,
     this.textDirection = TextDirection.ltr,
-    this.wordSpacing = 4.0,
     this.lineSpacing = 0.0,
     this.firstLineIndent = 0.0,
     this.subsequentLinesIndent = 0.0,
@@ -24,7 +23,6 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
   RenderObject createRenderObject(BuildContext context) {
     return RenderParagraph(
       textDirection: textDirection,
-      wordSpacing: wordSpacing,
       lineSpacing: lineSpacing,
       firstLineIndent: firstLineIndent,
       subsequentLinesIndent: subsequentLinesIndent,
@@ -38,7 +36,6 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
   ) {
     renderObject
       ..textDirection = textDirection
-      ..wordSpacing = wordSpacing
       ..lineSpacing = lineSpacing
       ..firstLineIndent = firstLineIndent
       ..subsequentLinesIndent = subsequentLinesIndent;
@@ -51,12 +48,10 @@ class RenderParagraph extends RenderBox
         RenderBoxContainerDefaultsMixin<RenderBox, ParagraphParentData> {
   RenderParagraph({
     TextDirection textDirection = TextDirection.ltr,
-    double wordSpacing = 4.0,
     double lineSpacing = 4.0,
     double firstLineIndent = 0.0,
     double subsequentLinesIndent = 0.0,
   }) : _textDirection = textDirection,
-       _wordSpacing = wordSpacing,
        _lineSpacing = lineSpacing,
        _firstLineIndent = firstLineIndent,
        _subsequentLinesIndent = subsequentLinesIndent;
@@ -66,14 +61,6 @@ class RenderParagraph extends RenderBox
   set textDirection(TextDirection value) {
     if (_textDirection == value) return;
     _textDirection = value;
-    markNeedsLayout();
-  }
-
-  double _wordSpacing;
-  double get wordSpacing => _wordSpacing;
-  set wordSpacing(double value) {
-    if (_wordSpacing == value) return;
-    _wordSpacing = value;
     markNeedsLayout();
   }
 
@@ -130,9 +117,7 @@ class RenderParagraph extends RenderBox
       final ParagraphParentData childParentData =
           child.parentData! as ParagraphParentData;
       child = childParentData.nextSibling;
-      if (child != null) {
-        totalWidth += wordSpacing;
-      }
+
     }
     // The max width is based on a single line, so we only need the first line indent.
     return totalWidth + _firstLineIndent;
@@ -255,7 +240,7 @@ class RenderParagraph extends RenderBox
       final childParentData = child.parentData! as ParagraphParentData;
       childParentData.offset = Offset(currentX, currentY);
 
-      currentX += childWidth + wordSpacing;
+      currentX += childWidth;
 
       child = childParentData.nextSibling;
     }
