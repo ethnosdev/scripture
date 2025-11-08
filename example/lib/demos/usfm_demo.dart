@@ -25,14 +25,14 @@ class _UsfmDemoState extends State<UsfmDemo> {
   }
 
   Future<void> _loadData() async {
-    final themeTextStyle = Theme.of(context).textTheme.bodyMedium;
-    final usfm = await rootBundle.loadString('assets/01GENBSB.SFM');
-    final paragraphs = _parseUsfm(usfm);
-    if (mounted) {
-      setState(() {
-        _passage = buildPassageWidget(paragraphs, style: themeTextStyle!);
-      });
-    }
+    // final themeTextStyle = Theme.of(context).textTheme.bodyMedium;
+    // final usfm = await rootBundle.loadString('assets/01GENBSB.SFM');
+    // final paragraphs = _parseUsfm(usfm);
+    // if (mounted) {
+    //   setState(() {
+    //     _passage = buildPassageWidget(paragraphs, style: themeTextStyle!);
+    //   });
+    // }
   }
 
   @override
