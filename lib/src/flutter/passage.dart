@@ -4,13 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 class PassageWidget extends MultiChildRenderObjectWidget {
-  // final double paragraphSpacing;
-
-  const PassageWidget({
-    super.key,
-    required super.children,
-    // this.paragraphSpacing = 8.0,
-  });
+  const PassageWidget({super.key, required super.children});
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -21,26 +15,13 @@ class PassageWidget extends MultiChildRenderObjectWidget {
   void updateRenderObject(
     BuildContext context,
     covariant RenderPassage renderObject,
-  ) {
-    // renderObject.paragraphSpacing = paragraphSpacing;
-  }
+  ) {}
 }
 
 class RenderPassage extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, PassageParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, PassageParentData> {
-  // RenderPassage({double paragraphSpacing = 8.0})
-  //   : _paragraphSpacing = paragraphSpacing;
-
-  // double _paragraphSpacing;
-  // double get paragraphSpacing => _paragraphSpacing;
-  // set paragraphSpacing(double value) {
-  //   if (_paragraphSpacing == value) return;
-  //   _paragraphSpacing = value;
-  //   markNeedsLayout();
-  // }
-
   @override
   void setupParentData(RenderBox child) {
     if (child.parentData is! PassageParentData) {
@@ -82,10 +63,6 @@ class RenderPassage extends RenderBox
       totalHeight += child.getMinIntrinsicHeight(width);
       final childParentData = child.parentData! as PassageParentData;
       child = childParentData.nextSibling;
-      // Add spacing if there's another paragraph to follow
-      // if (child != null) {
-      //   totalHeight += paragraphSpacing;
-      // }
     }
     return totalHeight;
   }
@@ -96,48 +73,6 @@ class RenderPassage extends RenderBox
     return computeMinIntrinsicHeight(width);
   }
 
-  // @override
-  // void performLayout() {
-  //   if (firstChild == null) {
-  //     size = constraints.constrain(Size.zero);
-  //     return;
-  //   }
-
-  //   double currentY = 0.0;
-  //   double maxContentWidth = 0.0;
-  //   RenderBox? child = firstChild;
-
-  //   while (child != null) {
-  //     // Lay out each child (paragraph) with the incoming width constraint
-  //     // but unconstrained height.
-  //     child.layout(
-  //       constraints.copyWith(minHeight: 0, maxHeight: double.infinity),
-  //       parentUsesSize: true,
-  //     );
-
-  //     final childParentData = child.parentData! as PassageParentData;
-
-  //     // Position the child at the current vertical offset.
-  //     childParentData.offset = Offset(0, currentY);
-
-  //     // Update the max width seen so far.
-  //     maxContentWidth = max(maxContentWidth, child.size.width);
-
-  //     // Advance the vertical offset by the child's height.
-  //     currentY += child.size.height;
-
-  //     // Move to the next child and add spacing if it exists.
-  //     final nextChild = childParentData.nextSibling;
-  //     if (nextChild != null) {
-  //       currentY += paragraphSpacing;
-  //     }
-  //     child = nextChild;
-  //   }
-
-  //   // The final size is the widest child's width and the total accumulated height.
-  //   size = Size(maxContentWidth, currentY);
-  // }
-
   @override
   void performLayout() {
     if (firstChild == null) {
@@ -146,35 +81,21 @@ class RenderPassage extends RenderBox
     }
 
     double currentY = 0.0;
-    // 1. Determine the width from the incoming constraints. This is the crucial change.
     final double contentWidth = constraints.maxWidth;
     RenderBox? child = firstChild;
 
     while (child != null) {
-      // 2. Lay out each child with a tight width constraint.
-      //    This tells the RenderParagraph to occupy the full available width.
       child.layout(
         BoxConstraints.tightFor(width: contentWidth),
         parentUsesSize: true,
       );
-
       final childParentData = child.parentData! as PassageParentData;
-
-      // Position the child at the current vertical offset.
       childParentData.offset = Offset(0, currentY);
-
-      // Advance the vertical offset by the child's height.
       currentY += child.size.height;
-
-      // Move to the next child and add spacing if it exists.
       final nextChild = childParentData.nextSibling;
-      // if (nextChild != null) {
-      //   currentY += paragraphSpacing;
-      // }
       child = nextChild;
     }
 
-    // 3. The final size must use the constrained width and the calculated height.
     size = Size(contentWidth, currentY);
   }
 
@@ -187,7 +108,6 @@ class RenderPassage extends RenderBox
 
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
-    // defaultHitTestChildren works perfectly for this layout.
     return defaultHitTestChildren(result, position: position);
   }
 }

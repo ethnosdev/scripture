@@ -4,17 +4,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 class ParagraphWidget extends MultiChildRenderObjectWidget {
-  final TextDirection textDirection;
-
-  final double lineSpacing;
   final double firstLineIndent;
   final double subsequentLinesIndent;
 
   const ParagraphWidget({
     super.key,
     required super.children,
-    this.textDirection = TextDirection.ltr,
-    this.lineSpacing = 0.0,
     this.firstLineIndent = 0.0,
     this.subsequentLinesIndent = 0.0,
   });
@@ -22,8 +17,6 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
   @override
   RenderObject createRenderObject(BuildContext context) {
     return RenderParagraph(
-      textDirection: textDirection,
-      lineSpacing: lineSpacing,
       firstLineIndent: firstLineIndent,
       subsequentLinesIndent: subsequentLinesIndent,
     );
@@ -35,8 +28,6 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
     covariant RenderParagraph renderObject,
   ) {
     renderObject
-      ..textDirection = textDirection
-      ..lineSpacing = lineSpacing
       ..firstLineIndent = firstLineIndent
       ..subsequentLinesIndent = subsequentLinesIndent;
   }
@@ -47,30 +38,10 @@ class RenderParagraph extends RenderBox
         ContainerRenderObjectMixin<RenderBox, ParagraphParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, ParagraphParentData> {
   RenderParagraph({
-    TextDirection textDirection = TextDirection.ltr,
-    double lineSpacing = 4.0,
     double firstLineIndent = 0.0,
     double subsequentLinesIndent = 0.0,
-  }) : _textDirection = textDirection,
-       _lineSpacing = lineSpacing,
-       _firstLineIndent = firstLineIndent,
+  }) : _firstLineIndent = firstLineIndent,
        _subsequentLinesIndent = subsequentLinesIndent;
-
-  TextDirection _textDirection;
-  TextDirection get textDirection => _textDirection;
-  set textDirection(TextDirection value) {
-    if (_textDirection == value) return;
-    _textDirection = value;
-    markNeedsLayout();
-  }
-
-  double _lineSpacing;
-  double get lineSpacing => _lineSpacing;
-  set lineSpacing(double value) {
-    if (_lineSpacing == value) return;
-    _lineSpacing = value;
-    markNeedsLayout();
-  }
 
   double _firstLineIndent;
   double get firstLineIndent => _firstLineIndent;
@@ -117,89 +88,10 @@ class RenderParagraph extends RenderBox
       final ParagraphParentData childParentData =
           child.parentData! as ParagraphParentData;
       child = childParentData.nextSibling;
-
     }
     // The max width is based on a single line, so we only need the first line indent.
     return totalWidth + _firstLineIndent;
   }
-
-  // @override
-  // void performLayout() {
-  //   if (firstChild == null) {
-  //     size = constraints.constrain(Size.zero);
-  //     return;
-  //   }
-
-  //   double currentX = _firstLineIndent;
-  //   double currentY = 0;
-  //   double maxLineHeight = 0;
-  //   double actualContentWidth = 0;
-
-  //   RenderBox? child = firstChild;
-
-  //   while (child != null) {
-  //     // Lay out the child with unconstrained width to get its intrinsic size.
-  //     // The Flutter framework is smart: if this child hasn't changed and it was
-  //     // already laid out with these same constraints (const BoxConstraints()),
-  //     // this call will return almost instantly without re-running the child's
-  //     // performLayout().
-  //     child.layout(const BoxConstraints(), parentUsesSize: true);
-
-  //     final double childWidth = child.size.width;
-  //     final double childHeight = child.size.height;
-  //     final double currentLineIndent = (currentY == 0)
-  //         ? _firstLineIndent
-  //         : _subsequentLinesIndent;
-
-  //     // Check if the word fits on the current line.
-  //     // We don't wrap if it's the very first word on a line, even if it overflows.
-  //     if (currentX > currentLineIndent &&
-  //         currentX + childWidth > constraints.maxWidth) {
-  //       // Doesn't fit, move to the next line
-  //       actualContentWidth = max(
-  //         actualContentWidth,
-  //         currentX - wordSpacing,
-  //       ); // Record width of completed line
-  //       currentX = _subsequentLinesIndent;
-  //       currentY += maxLineHeight + lineSpacing;
-  //       maxLineHeight = 0;
-  //     }
-
-  //     // Update max line height
-  //     maxLineHeight = max(maxLineHeight, childHeight);
-
-  //     // Set the position of the child
-  //     final childParentData = child.parentData! as ParagraphParentData;
-  //     childParentData.offset = Offset(currentX, currentY);
-
-  //     // Advance currentX
-  //     currentX += childWidth + wordSpacing;
-
-  //     child = childParentData.nextSibling;
-  //   }
-
-  //   // After the loop, account for the last line's width
-  //   actualContentWidth = max(
-  //     actualContentWidth,
-  //     currentX - wordSpacing, // Subtract trailing space
-  //   );
-
-  //   // Final height of the paragraph
-  //   size = Size(actualContentWidth, currentY + maxLineHeight);
-
-  //   // RTL adjustment remains the same, as it operates on the final calculated positions.
-  //   if (_textDirection == TextDirection.rtl) {
-  //     RenderBox? rtlChild = firstChild;
-  //     while (rtlChild != null) {
-  //       final childParentData = rtlChild.parentData! as ParagraphParentData;
-  //       childParentData.offset = Offset(
-  //         actualContentWidth - childParentData.offset.dx - rtlChild.size.width,
-  //         childParentData.offset.dy,
-  //       );
-  //       rtlChild = childParentData.nextSibling;
-  //     }
-  //   }
-  // }
 
   @override
   void performLayout() {
@@ -208,13 +100,11 @@ class RenderParagraph extends RenderBox
       return;
     }
 
-    // --- CHANGE #1: Define the final width from the start using constraints. ---
     final double paragraphWidth = constraints.maxWidth;
 
     double currentX = _firstLineIndent;
     double currentY = 0;
     double maxLineHeight = 0;
-    // We no longer need 'actualContentWidth'.
 
     RenderBox? child = firstChild;
 
@@ -229,9 +119,8 @@ class RenderParagraph extends RenderBox
 
       if (currentX > currentLineIndent &&
           currentX + childWidth > paragraphWidth) {
-        // Use paragraphWidth here
         currentX = _subsequentLinesIndent;
-        currentY += maxLineHeight + lineSpacing;
+        currentY += maxLineHeight;
         maxLineHeight = 0;
       }
 
@@ -245,24 +134,7 @@ class RenderParagraph extends RenderBox
       child = childParentData.nextSibling;
     }
 
-    // --- CHANGE #2: Set the final size using the constrained width. ---
-    // The size of this RenderParagraph MUST be the width from the parent's
-    // constraints and the height calculated from the wrapped content.
     size = Size(paragraphWidth, currentY + maxLineHeight);
-
-    if (_textDirection == TextDirection.rtl) {
-      RenderBox? rtlChild = firstChild;
-      while (rtlChild != null) {
-        final childParentData = rtlChild.parentData! as ParagraphParentData;
-
-        // --- CHANGE #3: Use the constrained width for RTL calculations. ---
-        childParentData.offset = Offset(
-          paragraphWidth - childParentData.offset.dx - rtlChild.size.width,
-          childParentData.offset.dy,
-        );
-        rtlChild = childParentData.nextSibling;
-      }
-    }
   }
 
   @override
