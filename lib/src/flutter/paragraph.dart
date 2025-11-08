@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import 'space_widget.dart';
+
 class ParagraphWidget extends MultiChildRenderObjectWidget {
   final double firstLineIndent;
   final double subsequentLinesIndent;
@@ -117,18 +119,36 @@ class RenderParagraph extends RenderBox
           ? _firstLineIndent
           : _subsequentLinesIndent;
 
+      // Skip leading spaces at the beginning of a line.
+      final bool isAtStartOfLine = currentX == currentLineIndent;
+      final bool isChildASpace = child is RenderSpace;
+      if (isChildASpace && isAtStartOfLine) {
+        child = (child.parentData as ParagraphParentData).nextSibling;
+        continue;
+      }
+
+      // Check if the current child overflows the line.
       if (currentX > currentLineIndent &&
           currentX + childWidth > paragraphWidth) {
         currentX = _subsequentLinesIndent;
         currentY += maxLineHeight;
         maxLineHeight = 0;
+
+        // Re-check for leading space after wrapping. If so, skip it.
+        if (isChildASpace) {
+          child = (child.parentData as ParagraphParentData).nextSibling;
+          continue;
+        }
       }
 
-      maxLineHeight = max(maxLineHeight, childHeight);
-
+      // Position the child.
       final childParentData = child.parentData! as ParagraphParentData;
       childParentData.offset = Offset(currentX, currentY);
 
+      // Update max line height for the current line.
+      maxLineHeight = max(maxLineHeight, childHeight);
+
+      // Advance the horizontal cursor for the next child.
       currentX += childWidth;
 
       child = childParentData.nextSibling;
