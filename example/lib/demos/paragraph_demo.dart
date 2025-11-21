@@ -41,12 +41,12 @@ class _ParagraphDemoState extends State<ParagraphDemo> {
                 text: word.text,
                 id: word.id,
                 style: const TextStyle(fontSize: 24, color: Colors.black),
-                onTap: (text, id) {
-                  _showMessage(context, 'Tap: "$text", id: $id');
-                },
-                onLongPress: (text, id) {
-                  _showMessage(context, 'Long press: "$text", id: $id');
-                },
+                // onTap: (text, id) {
+                //   _showMessage(context, 'Tap: "$text", id: $id');
+                // },
+                // onLongPress: (text, id) {
+                //   _showMessage(context, 'Long press: "$text", id: $id');
+                // },
               ),
           ],
         ),

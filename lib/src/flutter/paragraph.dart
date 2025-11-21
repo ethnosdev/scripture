@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:scripture/src/core/highlight_range.dart';
 
 import 'selection_controller.dart';
 import 'space_widget.dart';
@@ -15,6 +16,7 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
   final ScriptureSelectionController? selectionController;
   final Color highlightColor;
   final bool selectable;
+  final List<HighlightRange> highlights;
 
   const ParagraphWidget({
     super.key,
@@ -25,6 +27,7 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
     this.selectionController,
     this.highlightColor = const Color(0x4D2196F3),
     this.selectable = true,
+    this.highlights = const [],
   });
 
   @override
@@ -36,6 +39,7 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
       selectionController: selectionController,
       highlightColor: highlightColor,
       selectable: selectable,
+      highlights: highlights,
     );
   }
 
@@ -50,7 +54,8 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
       ..textAlign = textAlign
       ..selectionController = selectionController
       ..highlightColor = highlightColor
-      ..selectable = selectable;
+      ..selectable = selectable
+      ..highlights = highlights;
   }
 }
 
@@ -65,11 +70,13 @@ class RenderParagraph extends RenderBox
     ScriptureSelectionController? selectionController,
     Color highlightColor = const Color(0x4D2196F3),
     bool selectable = true,
+    List<HighlightRange> highlights = const [],
   }) : _firstLineIndent = firstLineIndent,
        _subsequentLinesIndent = subsequentLinesIndent,
        _textAlign = textAlign,
        _selectionController = selectionController,
        _highlightColor = highlightColor,
+       _highlights = highlights,
        _selectable = selectable;
 
   double _firstLineIndent;
@@ -119,6 +126,14 @@ class RenderParagraph extends RenderBox
   set selectable(bool value) {
     if (_selectable == value) return;
     _selectable = value;
+    markNeedsPaint();
+  }
+
+  List<HighlightRange> _highlights;
+  List<HighlightRange> get highlights => _highlights;
+  set highlights(List<HighlightRange> value) {
+    if (_highlights == value) return;
+    _highlights = value;
     markNeedsPaint();
   }
 
@@ -319,27 +334,52 @@ class RenderParagraph extends RenderBox
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    // 1. Paint Highlights (Background)
+    // 1. Paint Persistent Highlights (e.g. Search results, Bookmarks)
+    if (_selectable && _highlights.isNotEmpty) {
+      _paintPersistentHighlights(context, offset);
+    }
+
+    // 2. Paint User Selection (e.g. Dragging)
     if (_selectable &&
         _selectionController != null &&
         _selectionController!.hasSelection) {
       _paintSelection(context, offset);
     }
 
-    // 2. Paint Text (Foreground)
+    // 3. Paint Text
     defaultPaint(context, offset);
   }
 
-  void _paintSelection(PaintingContext context, Offset paragraphOffset) {
-    final startId = int.tryParse(_selectionController!.startId ?? '');
-    final endId = int.tryParse(_selectionController!.endId ?? '');
-    if (startId == null || endId == null) return;
+  void _paintPersistentHighlights(PaintingContext context, Offset offset) {
+    for (final range in _highlights) {
+      final start = int.tryParse(range.startId);
+      final end = int.tryParse(range.endId);
+      if (start == null || end == null) continue;
 
+      _paintRange(context, offset, start, end, range.color);
+    }
+  }
+
+  void _paintSelection(PaintingContext context, Offset offset) {
+    final start = int.tryParse(_selectionController!.startId ?? '');
+    final end = int.tryParse(_selectionController!.endId ?? '');
+    if (start == null || end == null) return;
+
+    _paintRange(context, offset, start, end, _highlightColor);
+  }
+
+  void _paintRange(
+    PaintingContext context,
+    Offset paragraphOffset,
+    int startId,
+    int endId,
+    Color color,
+  ) {
     final Paint paint = Paint()
-      ..color = _highlightColor
+      ..color = color
       ..style = PaintingStyle.fill;
 
-    // We will collect all selected rects here
+    // 1. Collect all individual rects for words in this range
     final List<Rect> selectedRects = [];
 
     RenderBox? child = firstChild;
@@ -357,46 +397,45 @@ class RenderParagraph extends RenderBox
 
     if (selectedRects.isEmpty) return;
 
-    // MERGE LOGIC: Combine rects that are on the same line and adjacent/overlapping
+    // 2. Sort rects to ensure we process them in visual order (Top-Down, Left-Right)
+    selectedRects.sort((a, b) {
+      final dy = a.top.compareTo(b.top);
+      if (dy != 0) return dy;
+      return a.left.compareTo(b.left);
+    });
+
+    // 3. Merge Logic: Combine adjacent rects on the same line into a single "Run"
     final Path selectionPath = Path();
+    Rect? currentRun;
 
-    if (selectedRects.isNotEmpty) {
-      // Sort by Y then X to ensure safe processing order
-      selectedRects.sort((a, b) {
-        final dy = a.top.compareTo(b.top);
-        if (dy != 0) return dy;
-        return a.left.compareTo(b.left);
-      });
-
-      Rect? currentRun;
-
-      for (final rect in selectedRects) {
-        if (currentRun == null) {
-          currentRun = rect;
-          continue;
-        }
-
-        // Check if this rect is on the same "line" (vertical overlap)
-        // We use a slight tolerance for float precision
-        final isSameLine =
-            (rect.top - currentRun.top).abs() < 5.0 &&
-            (rect.bottom - currentRun.bottom).abs() < 5.0;
-
-        if (isSameLine) {
-          // Expand the current run to include this rect
-          currentRun = currentRun.expandToInclude(rect);
-        } else {
-          // New line detected: commit the previous run and start a new one
-          selectionPath.addRect(currentRun);
-          currentRun = rect;
-        }
+    for (final rect in selectedRects) {
+      if (currentRun == null) {
+        currentRun = rect;
+        continue;
       }
-      // Add the final run
-      if (currentRun != null) {
+
+      // Check if this rect is on the same line (vertical overlap)
+      // We use a small tolerance (5.0) to account for float precision or minor font shifts
+      final isSameLine =
+          (rect.top - currentRun.top).abs() < 5.0 &&
+          (rect.bottom - currentRun.bottom).abs() < 5.0;
+
+      if (isSameLine) {
+        // Expand current run to include this new rect
+        currentRun = currentRun.expandToInclude(rect);
+      } else {
+        // We found a new line. Commit the previous run to the path.
         selectionPath.addRect(currentRun);
+        currentRun = rect;
       }
     }
 
+    // Commit the final run
+    if (currentRun != null) {
+      selectionPath.addRect(currentRun);
+    }
+
+    // 4. Draw the unified path
     context.canvas.drawPath(selectionPath, paint);
   }
 

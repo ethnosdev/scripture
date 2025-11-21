@@ -69,8 +69,8 @@ class _PassageDemoState extends State<PassageDemo> {
                     text: word.text,
                     id: word.id,
                     style: baseStyle,
-                    onTap: (text, id) =>
-                        _showMessage(context, 'Tap: "$text", id: $id'),
+                    // onTap: (text, id) =>
+                    //     _showMessage(context, 'Tap: "$text", id: $id'),
                   ),
               ],
             ),
@@ -92,8 +92,8 @@ class _PassageDemoState extends State<PassageDemo> {
                     text: word.text,
                     id: word.id,
                     style: baseStyle,
-                    onTap: (text, id) =>
-                        _showMessage(context, 'Tap: "$text", id: $id'),
+                    // onTap: (text, id) =>
+                    //     _showMessage(context, 'Tap: "$text", id: $id'),
                   ),
               ],
             ),

@@ -7,11 +7,15 @@ enum _DragMode { none, start, end }
 class SelectableScripture extends StatefulWidget {
   final Widget child;
   final ScriptureSelectionController controller;
+  final void Function(String wordId)? onWordTapped;
+  final void Function(String wordId)? onSelectionRequested;
 
   const SelectableScripture({
     super.key,
     required this.child,
     required this.controller,
+    this.onWordTapped,
+    this.onSelectionRequested,
   });
 
   @override
@@ -21,16 +25,14 @@ class SelectableScripture extends StatefulWidget {
 class _SelectableScriptureState extends State<SelectableScripture> {
   final GlobalKey _passageKey = GlobalKey();
   _DragMode _dragMode = _DragMode.none;
-
-  // Store the fixed anchor when dragging starts.
-  // e.g. If moving 'End', 'Start' is the anchor.
   String? _fixedAnchor;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTapUp: _handleTap, // Changed from onTap to onTapUp to get details
+      behavior: HitTestBehavior.opaque,
+      onTapUp: _handleTap,
+      onLongPressStart: _handleLongPress,
       onPanStart: _handlePanStart,
       onPanUpdate: _handlePanUpdate,
       onPanEnd: (_) => _dragMode = _DragMode.none,
@@ -39,21 +41,40 @@ class _SelectableScriptureState extends State<SelectableScripture> {
   }
 
   void _handleTap(TapUpDetails details) {
-    // Change signature to accept details
-    if (!widget.controller.hasSelection) return;
-
     final renderObject = _passageKey.currentContext?.findRenderObject();
     if (renderObject is! RenderPassage) return;
 
     final localOffset = renderObject.globalToLocal(details.globalPosition);
     final hitWordId = renderObject.getWordAtOffset(localOffset);
 
-    // If we tapped outside text (null) or outside the active selection range, clear it.
-    if (hitWordId == null || !widget.controller.isSelected(hitWordId)) {
-      widget.controller.clear();
+    if (hitWordId == null) {
+      // Tapped on whitespace -> Clear selection
+      if (widget.controller.hasSelection) {
+        widget.controller.clear();
+      }
+      return;
     }
-    // Else: We tapped inside.
-    // Future TODO: You could show a Copy/Share menu here.
+
+    // Tapped on a word
+    if (widget.controller.hasSelection) {
+      // If selection exists, tapping anywhere (even on a word) deselects
+      widget.controller.clear();
+    } else {
+      // If no selection, trigger normal tap (e.g., footnotes)
+      widget.onWordTapped?.call(hitWordId);
+    }
+  }
+
+  void _handleLongPress(LongPressStartDetails details) {
+    final renderObject = _passageKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderPassage) return;
+
+    final localOffset = renderObject.globalToLocal(details.globalPosition);
+    final hitWordId = renderObject.getWordAtOffset(localOffset);
+
+    if (hitWordId != null) {
+      widget.onSelectionRequested?.call(hitWordId);
+    }
   }
 
   void _handlePanStart(DragStartDetails details) {
