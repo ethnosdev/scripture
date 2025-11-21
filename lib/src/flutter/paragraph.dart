@@ -8,12 +8,14 @@ import 'space_widget.dart';
 class ParagraphWidget extends MultiChildRenderObjectWidget {
   final double firstLineIndent;
   final double subsequentLinesIndent;
+  final TextAlign textAlign;
 
   const ParagraphWidget({
     super.key,
     required super.children,
     this.firstLineIndent = 0.0,
     this.subsequentLinesIndent = 0.0,
+    this.textAlign = TextAlign.start,
   });
 
   @override
@@ -21,6 +23,7 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
     return RenderParagraph(
       firstLineIndent: firstLineIndent,
       subsequentLinesIndent: subsequentLinesIndent,
+      textAlign: textAlign,
     );
   }
 
@@ -31,7 +34,8 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
   ) {
     renderObject
       ..firstLineIndent = firstLineIndent
-      ..subsequentLinesIndent = subsequentLinesIndent;
+      ..subsequentLinesIndent = subsequentLinesIndent
+      ..textAlign = textAlign;
   }
 }
 
@@ -42,8 +46,10 @@ class RenderParagraph extends RenderBox
   RenderParagraph({
     double firstLineIndent = 0.0,
     double subsequentLinesIndent = 0.0,
+    TextAlign textAlign = TextAlign.start,
   }) : _firstLineIndent = firstLineIndent,
-       _subsequentLinesIndent = subsequentLinesIndent;
+       _subsequentLinesIndent = subsequentLinesIndent,
+       _textAlign = textAlign;
 
   double _firstLineIndent;
   double get firstLineIndent => _firstLineIndent;
@@ -58,6 +64,14 @@ class RenderParagraph extends RenderBox
   set subsequentLinesIndent(double value) {
     if (_subsequentLinesIndent == value) return;
     _subsequentLinesIndent = value;
+    markNeedsLayout();
+  }
+
+  TextAlign _textAlign;
+  TextAlign get textAlign => _textAlign;
+  set textAlign(TextAlign value) {
+    if (_textAlign == value) return;
+    _textAlign = value;
     markNeedsLayout();
   }
 
@@ -103,10 +117,11 @@ class RenderParagraph extends RenderBox
     }
 
     final double paragraphWidth = constraints.maxWidth;
-
     double currentX = _firstLineIndent;
     double currentY = 0;
     double maxLineHeight = 0;
+
+    final List<RenderBox> currentLineChildren = [];
 
     RenderBox? child = firstChild;
 
@@ -130,6 +145,16 @@ class RenderParagraph extends RenderBox
       // Check if the current child overflows the line.
       if (currentX > currentLineIndent &&
           currentX + childWidth > paragraphWidth) {
+        // 1. Align the completed line (shift children if Center/Right)
+        _alignLine(
+          currentLineChildren,
+          currentLineIndent,
+          currentX,
+          paragraphWidth,
+        );
+        currentLineChildren.clear();
+
+        // 2. Move to next line
         currentX = _subsequentLinesIndent;
         currentY += maxLineHeight;
         maxLineHeight = 0;
@@ -141,20 +166,64 @@ class RenderParagraph extends RenderBox
         }
       }
 
-      // Position the child.
+      // Position the child (initially Left Aligned)
       final childParentData = child.parentData! as ParagraphParentData;
       childParentData.offset = Offset(currentX, currentY);
+
+      // Add to buffer for later alignment
+      currentLineChildren.add(child);
 
       // Update max line height for the current line.
       maxLineHeight = max(maxLineHeight, childHeight);
 
-      // Advance the horizontal cursor for the next child.
+      // Advance the horizontal cursor.
       currentX += childWidth;
 
       child = childParentData.nextSibling;
     }
 
+    // Align the final line
+    final double lastLineIndent = (currentY == 0)
+        ? _firstLineIndent
+        : _subsequentLinesIndent;
+    _alignLine(currentLineChildren, lastLineIndent, currentX, paragraphWidth);
+
     size = Size(paragraphWidth, currentY + maxLineHeight);
+  }
+
+  void _alignLine(
+    List<RenderBox> lineChildren,
+    double indent,
+    double usedWidth,
+    double maxWidth,
+  ) {
+    // only handling LTR text for now
+    if (_textAlign == TextAlign.left ||
+        _textAlign == TextAlign.start ||
+        lineChildren.isEmpty) {
+      return;
+    }
+    // Calculate empty space on the line.
+    // usedWidth includes the indent and all words.
+    // Example: Max 100. Indent 10. Words take 50. usedWidth = 60.
+    // Free space = 100 - 60 = 40.
+    final double freeSpace = maxWidth - usedWidth;
+
+    double shift = 0;
+
+    if (_textAlign == TextAlign.center) {
+      shift = freeSpace / 2;
+    } else if (_textAlign == TextAlign.right) {
+      shift = freeSpace;
+    }
+
+    if (shift == 0) return;
+
+    // Apply shift to all children on this line
+    for (final child in lineChildren) {
+      final parentData = child.parentData as ParagraphParentData;
+      parentData.offset += Offset(shift, 0);
+    }
   }
 
   @override
