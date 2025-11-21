@@ -2,6 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import 'selection_controller.dart';
+
 typedef WordWidgetCallback = void Function(String text, String id);
 
 class WordWidget extends LeafRenderObjectWidget {
@@ -10,6 +12,7 @@ class WordWidget extends LeafRenderObjectWidget {
   final TextStyle style;
   final WordWidgetCallback? onTap;
   final WordWidgetCallback? onLongPress;
+  final ScriptureSelectionController? selectionController;
 
   const WordWidget({
     super.key,
@@ -18,6 +21,7 @@ class WordWidget extends LeafRenderObjectWidget {
     this.style = const TextStyle(color: Color(0xFF000000), fontSize: 14),
     this.onTap,
     this.onLongPress,
+    this.selectionController,
   });
 
   @override
@@ -28,6 +32,7 @@ class WordWidget extends LeafRenderObjectWidget {
       style: style,
       onTap: onTap,
       onLongPress: onLongPress,
+      selectionController: selectionController,
     );
   }
 
@@ -41,7 +46,8 @@ class WordWidget extends LeafRenderObjectWidget {
       ..id = id
       ..style = style
       ..onTap = onTap
-      ..onLongPress = onLongPress;
+      ..onLongPress = onLongPress
+      ..selectionController = selectionController;
   }
 }
 
@@ -52,11 +58,13 @@ class RenderWord extends RenderBox {
     required TextStyle style,
     WordWidgetCallback? onTap,
     WordWidgetCallback? onLongPress,
+    ScriptureSelectionController? selectionController,
   }) : _text = text,
        _id = id,
        _style = style,
        _onTap = onTap,
-       _onLongPress = onLongPress {
+       _onLongPress = onLongPress,
+       _selectionController = selectionController {
     _textPainter = TextPainter(
       text: TextSpan(text: _text, style: _style),
       textDirection: TextDirection.ltr,
@@ -131,6 +139,22 @@ class RenderWord extends RenderBox {
     };
   }
 
+  ScriptureSelectionController? _selectionController;
+  ScriptureSelectionController? get selectionController => _selectionController;
+  set selectionController(ScriptureSelectionController? value) {
+    if (_selectionController == value) return;
+    if (attached) _selectionController?.removeListener(markNeedsPaint);
+    _selectionController = value;
+    if (attached) _selectionController?.addListener(markNeedsPaint);
+    markNeedsPaint();
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _selectionController?.addListener(markNeedsPaint);
+  }
+
   // --- RenderBox Overrides ---
 
   @override
@@ -163,6 +187,7 @@ class RenderWord extends RenderBox {
   void detach() {
     _tapRecognizer.dispose();
     _longPressRecognizer.dispose();
+    _selectionController?.removeListener(markNeedsPaint);
     super.detach();
   }
 }

@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import 'word.dart';
+
 class TextAtomWidget extends MultiChildRenderObjectWidget {
   const TextAtomWidget({super.key, required super.children});
 
@@ -23,6 +25,37 @@ class RenderTextAtom extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, TextAtomParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, TextAtomParentData> {
+  /// Returns the Word ID if the [localOffset] hits a RenderWord child.
+  String? getWordAtOffset(Offset localOffset) {
+    // Iterate children in reverse (standard hit-test order)
+    RenderBox? child = lastChild;
+    while (child != null) {
+      final parentData = child.parentData as TextAtomParentData;
+
+      // Convert local offset to child's coordinate system
+      final offsetInChild = localOffset - parentData.offset;
+
+      // Check if the point is within the child's bounds
+      final bool hit =
+          offsetInChild.dx >= 0 &&
+          offsetInChild.dx < child.size.width &&
+          offsetInChild.dy >= 0 &&
+          offsetInChild.dy < child.size.height;
+
+      if (hit) {
+        if (child is RenderWord) {
+          return child.id;
+        }
+        // If we hit a Footnote or VerseNumber, we return null immediately
+        // so we don't accidentally select a word "under" it (unlikely in this layout)
+        return null;
+      }
+
+      child = parentData.previousSibling;
+    }
+    return null;
+  }
+
   @override
   void setupParentData(RenderBox child) {
     if (child.parentData is! TextAtomParentData) {

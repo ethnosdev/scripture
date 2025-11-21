@@ -1,7 +1,9 @@
 import 'dart:math';
 
-import 'package:flutter/rendering.dart';
+import 'package:flutter/rendering.dart' hide RenderParagraph;
 import 'package:flutter/widgets.dart';
+
+import 'paragraph.dart';
 
 class PassageWidget extends MultiChildRenderObjectWidget {
   const PassageWidget({super.key, required super.children});
@@ -109,6 +111,34 @@ class RenderPassage extends RenderBox
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
     return defaultHitTestChildren(result, position: position);
+  }
+
+  /// Returns the Word ID at the given [localOffset].
+  String? getWordAtOffset(Offset localOffset) {
+    RenderBox? child = lastChild;
+    while (child != null) {
+      final parentData = child.parentData as PassageParentData;
+      final offsetInChild = localOffset - parentData.offset;
+
+      final bool inBounds =
+          offsetInChild.dx >= 0 &&
+          offsetInChild.dx < child.size.width &&
+          offsetInChild.dy >= 0 &&
+          offsetInChild.dy < child.size.height;
+
+      if (inBounds) {
+        if (child is RenderParagraph) {
+          // Recursively check inside the paragraph
+          final id = child.getWordAtOffset(offsetInChild);
+          if (id != null) return id;
+        }
+        // If we hit something else (like spacing), return null.
+        return null;
+      }
+
+      child = parentData.previousSibling;
+    }
+    return null;
   }
 }
 
