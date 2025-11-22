@@ -150,6 +150,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
     // Use styles from the object
     final style = pStyle.textStyle;
     final verseStyle = pStyle.verseNumberStyle;
+    final double spaceWidth = (style.fontSize ?? 14.0) * 0.28;
 
     for (int i = 0; i < elements.length; i++) {
       final current = elements[i];
@@ -165,7 +166,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             VerseNumberWidget(
               number: current.number,
               style: verseStyle,
-              padding: const EdgeInsets.only(right: 4.0),
+              padding: EdgeInsets.only(right: spaceWidth),
             ),
             WordWidget(text: next.text, id: next.id, style: style),
           ],
@@ -209,7 +210,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         // Spacing logic
         if (i + 1 < elements.length) {
           final next = elements[i + 1];
-          if (next is! Footnote) widgets.add(const SpaceWidget(width: 4.0));
+          if (next is! Footnote) widgets.add(SpaceWidget(width: spaceWidth));
         }
       }
     }
