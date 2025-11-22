@@ -12,8 +12,10 @@ class UsfmWidget extends StatefulWidget {
   final void Function(int wordId)? onWordTapped;
   final void Function(int wordId)? onSelectionRequested;
   final bool showHeadings;
+  final bool showVerseNumbers;
   final UsfmStyleBuilder styleBuilder;
   final TextStyle? footnoteMarkerStyle;
+  final Color? selectionColor;
 
   const UsfmWidget({
     super.key,
@@ -25,6 +27,8 @@ class UsfmWidget extends StatefulWidget {
     this.onWordTapped,
     this.onSelectionRequested,
     this.showHeadings = true,
+    this.showVerseNumbers = true,
+    this.selectionColor,
   });
 
   @override
@@ -135,6 +139,9 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           firstLineIndent: pStyle.firstLineIndent,
           subsequentLinesIndent: pStyle.subsequentLinesIndent,
           selectable: pStyle.selectable,
+          highlightColor:
+              widget.selectionColor ??
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
           children: pChildren,
         ),
       );
@@ -175,16 +182,21 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           i + 1 < elements.length &&
           elements[i + 1] is Word) {
         final next = elements[i + 1] as Word;
-        atom = TextAtomWidget(
-          children: [
+
+        final atomChildren = <Widget>[];
+        if (widget.showVerseNumbers) {
+          atomChildren.add(
             VerseNumberWidget(
               number: current.number,
               style: verseStyle,
-              padding: EdgeInsets.only(right: spaceWidth),
+              padding: const EdgeInsets.only(right: 4.0),
             ),
-            WordWidget(text: next.text, id: next.id, style: style),
-          ],
+          );
+        }
+        atomChildren.add(
+          WordWidget(text: next.text, id: next.id, style: style),
         );
+        atom = TextAtomWidget(children: atomChildren);
         i++;
       } else if (current is Word &&
           i + 1 < elements.length &&
@@ -212,11 +224,13 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           ],
         );
       } else if (current is VerseNumber) {
-        atom = TextAtomWidget(
-          children: [
-            VerseNumberWidget(number: current.number, style: verseStyle),
-          ],
-        );
+        if (widget.showVerseNumbers) {
+          atom = TextAtomWidget(
+            children: [
+              VerseNumberWidget(number: current.number, style: verseStyle),
+            ],
+          );
+        }
       }
 
       if (atom != null) {
