@@ -5,7 +5,7 @@ import 'package:scripture/scripture_core.dart';
 typedef FootnoteTapCallback = void Function(String footnoteText);
 typedef UsfmStyleBuilder = UsfmParagraphStyle Function(ParagraphFormat format);
 
-class UsfmWidget extends StatelessWidget {
+class UsfmWidget extends StatefulWidget {
   final List<UsfmLine> verseLines;
   final ScriptureSelectionController selectionController;
   final FootnoteTapCallback? onFootnoteTapped;
@@ -28,17 +28,62 @@ class UsfmWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // 1. Parse Data
-    final passage = UsfmParser.parse(verseLines, showHeadings: showHeadings);
+  State<UsfmWidget> createState() => _UsfmWidgetState();
+}
 
-    // 2. Build Widget Tree
+class _UsfmWidgetState extends State<UsfmWidget> {
+  late UsfmPassage _passage;
+  final Map<int, String> _wordFootnoteMap = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _prepareContent();
+  }
+
+  @override
+  void didUpdateWidget(covariant UsfmWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only re-parse if the actual text lines have changed
+    if (oldWidget.verseLines != widget.verseLines ||
+        oldWidget.showHeadings != widget.showHeadings) {
+      _prepareContent();
+    }
+  }
+
+  void _prepareContent() {
+    _passage = UsfmParser.parse(
+      widget.verseLines,
+      showHeadings: widget.showHeadings,
+    );
+    _wordFootnoteMap.clear();
+    for (final paragraph in _passage.paragraphs) {
+      final elements = paragraph.content;
+      for (int i = 0; i < elements.length - 1; i++) {
+        final current = elements[i];
+        final next = elements[i + 1];
+        // Look ahead for Footnotes
+        if (current is Word && next is Footnote) {
+          _wordFootnoteMap[current.id] = next.text;
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SelectableScripture(
-      controller: selectionController,
-      onWordTapped: onWordTapped,
-      onSelectionRequested: onSelectionRequested,
+      controller: widget.selectionController,
+      onWordTapped: (int wordId) {
+        if (_wordFootnoteMap.containsKey(wordId)) {
+          widget.onFootnoteTapped?.call(_wordFootnoteMap[wordId]!);
+        } else {
+          widget.onWordTapped?.call(wordId);
+        }
+      },
+      onSelectionRequested: widget.onSelectionRequested,
       child: PassageWidget(
-        children: _buildParagraphWidgets(context, passage.paragraphs),
+        children: _buildParagraphWidgets(context, _passage.paragraphs),
       ),
     );
   }
@@ -51,7 +96,7 @@ class UsfmWidget extends StatelessWidget {
 
     for (final paragraph in paragraphs) {
       // 1. Get the complete style/layout definition
-      final pStyle = styleBuilder(paragraph.format);
+      final pStyle = widget.styleBuilder(paragraph.format);
 
       // 2. Build children using the style
       final pChildren = _getParagraphChildren(context, paragraph, pStyle);
@@ -71,7 +116,7 @@ class UsfmWidget extends StatelessWidget {
       // The logic is encapsulated in pStyle
       children.add(
         ParagraphWidget(
-          selectionController: selectionController,
+          selectionController: widget.selectionController,
           textAlign: pStyle.textAlign,
           firstLineIndent: pStyle.firstLineIndent,
           subsequentLinesIndent: pStyle.subsequentLinesIndent,
@@ -131,7 +176,7 @@ class UsfmWidget extends StatelessWidget {
           elements[i + 1] is Footnote) {
         final next = elements[i + 1] as Footnote;
         final footnoteStyle =
-            footnoteMarkerStyle ??
+            widget.footnoteMarkerStyle ??
             style.copyWith(color: Theme.of(context).colorScheme.primary);
         atom = TextAtomWidget(
           children: [
@@ -140,7 +185,7 @@ class UsfmWidget extends StatelessWidget {
               marker: '*',
               text: next.text,
               style: footnoteStyle,
-              onTap: onFootnoteTapped,
+              onTap: widget.onFootnoteTapped,
             ),
           ],
         );
