@@ -4,7 +4,7 @@ typedef WordWidgetCallback = void Function(String text, String id);
 
 class WordWidget extends LeafRenderObjectWidget {
   final String text;
-  final String id;
+  final int id;
   final TextStyle style;
 
   const WordWidget({
@@ -32,13 +32,10 @@ class WordWidget extends LeafRenderObjectWidget {
 }
 
 class RenderWord extends RenderBox {
-  RenderWord({
-    required String text,
-    required String id,
-    required TextStyle style,
-  }) : _text = text,
-       _id = id,
-       _style = style {
+  RenderWord({required String text, required int id, required TextStyle style})
+    : _text = text,
+      _id = id,
+      _style = style {
     _textPainter = TextPainter(
       text: TextSpan(text: _text, style: _style),
       textDirection: TextDirection.ltr,
@@ -56,11 +53,12 @@ class RenderWord extends RenderBox {
     markNeedsLayout();
   }
 
-  String _id;
-  String get id => _id;
-  set id(String value) {
+  int _id;
+  int get id => _id;
+  set id(int value) {
     if (_id == value) return;
     _id = value;
+    markNeedsPaint();
   }
 
   TextStyle _style;

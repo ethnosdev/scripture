@@ -3,17 +3,17 @@ import 'package:flutter/foundation.dart';
 /// Manages the state of word selection within a scripture passage.
 ///
 /// Keeps track of the [startId] and [endId] of the selected range.
-/// IDs are expected to be numeric strings (packed integers) representing
+/// IDs are expected to be packed integers representing
 /// specific words (e.g. BBCCCVVVWWW).
 class ScriptureSelectionController extends ChangeNotifier {
-  String? _startId;
-  String? _endId;
+  int? _startId;
+  int? _endId;
 
   /// The ID of the first word in the selection.
-  String? get startId => _startId;
+  int? get startId => _startId;
 
   /// The ID of the last word in the selection.
-  String? get endId => _endId;
+  int? get endId => _endId;
 
   /// Whether a valid selection currently exists.
   bool get hasSelection => _startId != null && _endId != null;
@@ -22,18 +22,11 @@ class ScriptureSelectionController extends ChangeNotifier {
   ///
   /// This method automatically orders [start] and [end] so that
   /// [startId] is always numerically less than or equal to [endId].
-  void selectRange(String start, String end) {
-    // Parse to integers to compare magnitude correctly
-    final s = int.tryParse(start) ?? -1;
-    final e = int.tryParse(end) ?? -1;
+  void selectRange(int start, int end) {
+    int newStart;
+    int newEnd;
 
-    // If parsing failed, we can't safely select
-    if (s == -1 || e == -1) return;
-
-    String newStart;
-    String newEnd;
-
-    if (s > e) {
+    if (start > end) {
       newStart = end;
       newEnd = start;
     } else {
@@ -49,7 +42,7 @@ class ScriptureSelectionController extends ChangeNotifier {
   }
 
   /// Selects a single word.
-  void selectWord(String id) {
+  void selectWord(int id) {
     selectRange(id, id);
   }
 
@@ -63,15 +56,11 @@ class ScriptureSelectionController extends ChangeNotifier {
   }
 
   /// Helper to check if a specific word ID falls within the current selection.
-  bool isSelected(String id) {
+  bool isSelected(int id) {
     if (!hasSelection) return false;
 
-    final target = int.tryParse(id);
-    final start = int.tryParse(_startId!);
-    final end = int.tryParse(_endId!);
+    if (_startId == null || _endId == null) return false;
 
-    if (target == null || start == null || end == null) return false;
-
-    return target >= start && target <= end;
+    return id >= _startId! && id <= _endId!;
   }
 }

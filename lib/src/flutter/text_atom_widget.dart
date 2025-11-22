@@ -26,7 +26,7 @@ class RenderTextAtom extends RenderBox
         ContainerRenderObjectMixin<RenderBox, TextAtomParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, TextAtomParentData> {
   /// Returns the Word ID if the [localOffset] hits a RenderWord child.
-  String? getWordAtOffset(Offset localOffset) {
+  int? getWordAtOffset(Offset localOffset) {
     // Iterate children in reverse (standard hit-test order)
     RenderBox? child = lastChild;
     while (child != null) {

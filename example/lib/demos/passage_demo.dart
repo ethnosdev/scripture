@@ -29,13 +29,13 @@ class _PassageDemoState extends State<PassageDemo> {
     int wordIndex = 0;
     for (int i = 0; i < words.length; i++) {
       final word = words[i];
-      p1Words.add(Word(id: wordIndex.toString(), text: word));
+      p1Words.add(Word(id: wordIndex, text: word));
       wordIndex++;
     }
     words = paragraph2.split(' ');
     for (int i = 0; i < words.length; i++) {
       final word = words[i];
-      p2Words.add(Word(id: wordIndex.toString(), text: word));
+      p2Words.add(Word(id: wordIndex, text: word));
       wordIndex++;
     }
   }

@@ -1,8 +1,5 @@
-import 'package:scripture/scripture.dart'; // for ScriptureSelectionController
+import 'package:scripture/scripture.dart';
 import 'package:scripture/scripture_core.dart';
-
-import 'usfm_line.dart';
-import 'usfm_parser.dart'; // for UsfmLine
 
 /// Helper logic for manipulating selections based on content.
 class ScriptureLogic {
@@ -11,14 +8,11 @@ class ScriptureLogic {
   static void highlightVerse(
     ScriptureSelectionController controller,
     List<UsfmLine> lines,
-    String wordIdText,
+    int wordId,
   ) {
-    final wordId = int.tryParse(wordIdText);
-    if (wordId == null) return;
-
     final targetVerseRef = wordId ~/ 1000;
-    String? startId;
-    String? endId;
+    int? startId;
+    int? endId;
 
     // Logic extracted from your original _handleWordLongPress
     // Simplified slightly for readability, but identical logic.
@@ -58,7 +52,7 @@ class ScriptureLogic {
     }
 
     if (startId != null && endId != null) {
-      controller.selectRange(startId!, endId!);
+      controller.selectRange(startId, endId);
     }
   }
 

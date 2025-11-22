@@ -114,7 +114,7 @@ class RenderPassage extends RenderBox
   }
 
   /// Returns the Word ID at the given [localOffset].
-  String? getWordAtOffset(Offset localOffset) {
+  int? getWordAtOffset(Offset localOffset) {
     RenderBox? child = lastChild;
     while (child != null) {
       final parentData = child.parentData as PassageParentData;

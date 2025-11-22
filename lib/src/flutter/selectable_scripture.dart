@@ -7,8 +7,8 @@ enum _DragMode { none, start, end }
 class SelectableScripture extends StatefulWidget {
   final Widget child;
   final ScriptureSelectionController controller;
-  final void Function(String wordId)? onWordTapped;
-  final void Function(String wordId)? onSelectionRequested;
+  final void Function(int wordId)? onWordTapped;
+  final void Function(int wordId)? onSelectionRequested;
 
   const SelectableScripture({
     super.key,
@@ -25,7 +25,7 @@ class SelectableScripture extends StatefulWidget {
 class _SelectableScriptureState extends State<SelectableScripture> {
   final GlobalKey _passageKey = GlobalKey();
   _DragMode _dragMode = _DragMode.none;
-  String? _fixedAnchor;
+  int? _fixedAnchor;
 
   @override
   Widget build(BuildContext context) {
@@ -84,18 +84,17 @@ class _SelectableScriptureState extends State<SelectableScripture> {
     if (renderObject is! RenderPassage) return;
 
     final localOffset = renderObject.globalToLocal(details.globalPosition);
-    final hitWordIdText = renderObject.getWordAtOffset(localOffset);
+    final hitId = renderObject.getWordAtOffset(localOffset);
 
-    if (hitWordIdText == null) {
+    if (hitId == null) {
       _dragMode = _DragMode.none;
       return;
     }
 
-    final hitId = int.tryParse(hitWordIdText);
-    final startId = int.tryParse(widget.controller.startId!);
-    final endId = int.tryParse(widget.controller.endId!);
+    final startId = widget.controller.startId;
+    final endId = widget.controller.endId;
 
-    if (hitId == null || startId == null || endId == null) {
+    if (startId == null || endId == null) {
       _dragMode = _DragMode.none;
       return;
     }

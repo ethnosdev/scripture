@@ -86,7 +86,7 @@ class UsfmParser {
         final cleanText = _extractUsfmFootnoteText(fullMatch);
         if (cleanText.isNotEmpty) list.add(Footnote(cleanText));
       } else if (match.group(3) != null) {
-        list.add(Word(text: fullMatch, id: wordId.toString()));
+        list.add(Word(text: fullMatch, id: wordId));
         wordId++;
       }
     }

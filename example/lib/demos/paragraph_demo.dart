@@ -24,7 +24,7 @@ class _ParagraphDemoState extends State<ParagraphDemo> {
 
     for (int i = 0; i < words.length; i++) {
       final word = words[i];
-      wordList.add(Word(id: i.toString(), text: word));
+      wordList.add(Word(id: i, text: word));
     }
   }
 

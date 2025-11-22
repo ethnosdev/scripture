@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:scripture/scripture.dart';
 import 'package:collection/collection.dart';
 import 'package:scripture/scripture_core.dart';
@@ -105,8 +104,8 @@ class _UsfmDemoState extends State<UsfmDemo> {
         } else if (item.startsWith('\\')) {
           // ignore other markers
         } else if (item.isNotEmpty) {
-          final id = '$chapter:$verse:${wordIndex++}';
-          para.content.add(Word(text: item, id: id));
+          // final id = '$chapter:$verse:${wordIndex++}';
+          para.content.add(Word(text: item, id: 1));
         }
       }
     }

@@ -4,7 +4,7 @@ class ParagraphElement {}
 
 class Word extends ParagraphElement {
   final String text;
-  final String id;
+  final int id;
   Word({required this.text, required this.id});
 }
 

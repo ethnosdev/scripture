@@ -13,7 +13,7 @@ class WordDemo extends StatelessWidget {
           decoration: BoxDecoration(border: Border.all(color: Colors.red)),
           child: WordWidget(
             text: 'Hello',
-            id: '1',
+            id: 1,
             style: const TextStyle(fontSize: 24, color: Colors.black),
             // onTap: (text, id) {
             //   _showMessage(context, 'Tap: "$text", id: $id');

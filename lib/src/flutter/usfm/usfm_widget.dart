@@ -9,8 +9,8 @@ class UsfmWidget extends StatelessWidget {
   final List<UsfmLine> verseLines;
   final ScriptureSelectionController selectionController;
   final FootnoteTapCallback? onFootnoteTapped;
-  final void Function(String wordId)? onWordTapped;
-  final void Function(String wordId)? onSelectionRequested;
+  final void Function(int wordId)? onWordTapped;
+  final void Function(int wordId)? onSelectionRequested;
   final bool showHeadings;
   final UsfmStyleBuilder styleBuilder;
   final TextStyle? footnoteMarkerStyle;

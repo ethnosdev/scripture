@@ -150,7 +150,7 @@ class RenderParagraph extends RenderBox
   }
 
   /// Returns the Word ID at the given [localOffset].
-  String? getWordAtOffset(Offset localOffset) {
+  int? getWordAtOffset(Offset localOffset) {
     RenderBox? child = lastChild;
     while (child != null) {
       final parentData = child.parentData as ParagraphParentData;
@@ -361,8 +361,8 @@ class RenderParagraph extends RenderBox
   }
 
   void _paintSelection(PaintingContext context, Offset offset) {
-    final start = int.tryParse(_selectionController!.startId ?? '');
-    final end = int.tryParse(_selectionController!.endId ?? '');
+    final start = _selectionController?.startId;
+    final end = _selectionController?.endId;
     if (start == null || end == null) return;
 
     _paintRange(context, offset, start, end, _highlightColor);
@@ -446,8 +446,8 @@ class RenderParagraph extends RenderBox
     int endId,
     List<Rect> collector,
   ) {
-    final id = int.tryParse(word.id);
-    if (id != null && id >= startId && id <= endId) {
+    final id = word.id;
+    if (id >= startId && id <= endId) {
       // Inflate slightly for better visuals (connects tiny gaps between words)
       collector.add((offset & word.size).inflate(0.5));
     }
