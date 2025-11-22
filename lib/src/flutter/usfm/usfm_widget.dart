@@ -56,18 +56,32 @@ class _UsfmWidgetState extends State<UsfmWidget> {
       widget.verseLines,
       showHeadings: widget.showHeadings,
     );
+
     _wordFootnoteMap.clear();
+    final Map<int, String> wordTextCache = {};
+
     for (final paragraph in _passage.paragraphs) {
       final elements = paragraph.content;
-      for (int i = 0; i < elements.length - 1; i++) {
+      final isBiblical = paragraph.format.isBiblicalText;
+
+      for (int i = 0; i < elements.length; i++) {
         final current = elements[i];
-        final next = elements[i + 1];
-        // Look ahead for Footnotes
-        if (current is Word && next is Footnote) {
-          _wordFootnoteMap[current.id] = next.text;
+        if (current is Word) {
+          // don't cache heading words
+          if (isBiblical) {
+            wordTextCache[current.id] = current.text;
+          }
+          if (i + 1 < elements.length) {
+            final next = elements[i + 1];
+            if (next is Footnote) {
+              _wordFootnoteMap[current.id] = next.text;
+            }
+          }
         }
       }
     }
+
+    widget.selectionController.setWordCache(wordTextCache);
   }
 
   @override

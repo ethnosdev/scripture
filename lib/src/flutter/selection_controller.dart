@@ -9,6 +9,9 @@ class ScriptureSelectionController extends ChangeNotifier {
   int? _startId;
   int? _endId;
 
+  // Cache storage
+  Map<int, String> _wordTextMap = {};
+
   /// The ID of the first word in the selection.
   int? get startId => _startId;
 
@@ -17,6 +20,11 @@ class ScriptureSelectionController extends ChangeNotifier {
 
   /// Whether a valid selection currently exists.
   bool get hasSelection => _startId != null && _endId != null;
+
+  /// Populates the cache so the controller knows the text content of the IDs.
+  void setWordCache(Map<int, String> map) {
+    _wordTextMap = map;
+  }
 
   /// Selects a range of words defined by [start] and [end] IDs.
   ///
@@ -62,5 +70,21 @@ class ScriptureSelectionController extends ChangeNotifier {
     if (_startId == null || _endId == null) return false;
 
     return id >= _startId! && id <= _endId!;
+  }
+
+  /// Generates the string for the currently selected range.
+  String getSelectedText() {
+    if (!hasSelection) return '';
+    final buffer = StringBuffer();
+    for (int i = _startId!; i <= _endId!; i++) {
+      final text = _wordTextMap[i];
+      if (text != null) {
+        if (buffer.isNotEmpty) {
+          buffer.write(' ');
+        }
+        buffer.write(text);
+      }
+    }
+    return buffer.toString();
   }
 }
