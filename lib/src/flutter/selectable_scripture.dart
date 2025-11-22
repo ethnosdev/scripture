@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'passage.dart';
 import 'selection_controller.dart'; // Import to access RenderPassage
@@ -29,15 +30,43 @@ class _SelectableScriptureState extends State<SelectableScripture> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapUp: _handleTap,
-      onLongPressStart: _handleLongPress,
-      onPanStart: _handlePanStart,
-      onPanUpdate: _handlePanUpdate,
-      onPanEnd: (_) => _dragMode = _DragMode.none,
-      child: KeyedSubtree(key: _passageKey, child: widget.child),
+    return RawGestureDetector(
+      gestures: {
+        HandlePanGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<HandlePanGestureRecognizer>(
+              () => HandlePanGestureRecognizer(isHandleHit: _isHandleHit),
+              (HandlePanGestureRecognizer instance) {
+                instance
+                  ..onStart = _handlePanStart
+                  ..onUpdate = _handlePanUpdate
+                  ..onEnd = (_) => _dragMode = _DragMode.none;
+              },
+            ),
+      },
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapUp: _handleTap,
+        onLongPressStart: _handleLongPress,
+        child: KeyedSubtree(key: _passageKey, child: widget.child),
+      ),
     );
+  }
+
+  /// Returns true if the touch is strictly on the Start or End word of the current selection.
+  bool _isHandleHit(Offset globalPosition) {
+    if (!widget.controller.hasSelection) return false;
+
+    final renderObject = _passageKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderPassage) return false;
+
+    final localOffset = renderObject.globalToLocal(globalPosition);
+    final hitId = renderObject.getWordAtOffset(localOffset);
+
+    if (hitId == null) return false;
+
+    // Only claim the gesture if we hit the exact Start or End word
+    return hitId == widget.controller.startId ||
+        hitId == widget.controller.endId;
   }
 
   void _handleTap(TapUpDetails details) {
@@ -99,7 +128,6 @@ class _SelectableScriptureState extends State<SelectableScripture> {
       return;
     }
 
-    // 1. Strict Boundary Check (Preferred)
     if (hitId == startId) {
       _dragMode = _DragMode.start;
       _fixedAnchor = widget.controller.endId;
@@ -112,27 +140,20 @@ class _SelectableScriptureState extends State<SelectableScripture> {
       return;
     }
 
-    // 2. Proximity Check (Solves the "Invisible Header" issue)
-    // If the user drags from *inside* the selection, move the closest boundary.
+    // Logic to determine drag mode based on proximity if not exact hit
     if (hitId > startId && hitId < endId) {
       final distToStart = hitId - startId;
       final distToEnd = endId - hitId;
-
       if (distToStart <= distToEnd) {
-        // Closer to start
         _dragMode = _DragMode.start;
         _fixedAnchor = widget.controller.endId;
       } else {
-        // Closer to end
         _dragMode = _DragMode.end;
         _fixedAnchor = widget.controller.startId;
       }
       return;
     }
 
-    // 3. Outside Check
-    // If user drags a word strictly OUTSIDE the current selection,
-    // we do nothing (scrolling handles this).
     _dragMode = _DragMode.none;
   }
 
@@ -153,6 +174,26 @@ class _SelectableScriptureState extends State<SelectableScripture> {
       } else {
         widget.controller.selectRange(_fixedAnchor!, hitWordId);
       }
+    }
+  }
+}
+
+class HandlePanGestureRecognizer extends PanGestureRecognizer {
+  final bool Function(Offset globalPosition) isHandleHit;
+
+  HandlePanGestureRecognizer({required this.isHandleHit});
+
+  @override
+  void addPointer(PointerDownEvent event) {
+    // 1. Check if the touch hits a selection handle BEFORE adding the pointer
+    if (isHandleHit(event.position)) {
+      super.addPointer(event);
+      // 2. AGGRESSIVE WIN: Immediately declare victory in the gesture arena.
+      // This prevents a PageView from stealing the gesture after a few pixels of movement.
+      resolve(GestureDisposition.accepted);
+    } else {
+      // 3. Ignore the touch. This lets a PageView/ScrollView handle it.
+      // We don't call super.addPointer(event).
     }
   }
 }
