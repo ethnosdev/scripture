@@ -9,3 +9,8 @@ export 'src/flutter/passage.dart';
 export 'src/flutter/verse_number.dart';
 export 'src/flutter/selection_controller.dart';
 export 'src/flutter/selectable_scripture.dart';
+export 'src/flutter/usfm/usfm_line.dart';
+export 'src/flutter/usfm/usfm_parser.dart';
+export 'src/flutter/usfm/usfm_widget.dart';
+export 'src/flutter/usfm/highlight_verse.dart';
+export 'src/flutter/usfm/usfm_paragraph_style.dart';
