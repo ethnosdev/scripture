@@ -32,6 +32,7 @@ If you are building a Bible app or working with USFM data, the `UsfmWidget` is y
 ```dart
 import 'package:flutter/material.dart';
 import 'package:scripture/scripture.dart';
+import 'package:scripture/scripture_core.dart';
 
 class BiblePage extends StatefulWidget {
   const BiblePage({super.key});
@@ -68,22 +69,27 @@ class _BiblePageState extends State<BiblePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: UsfmWidget(
-        verseLines: lines,
-        selectionController: selectionController,
-        // Define visual styles for USFM tags
-        styleBuilder: (format) {
-          return UsfmParagraphStyle.usfmDefaults(
-            format: format,
-            baseStyle: const TextStyle(fontSize: 18, color: Colors.black),
-          );
-        },
-        // Handle Interactions
-        onWordTapped: (wordId) => print("Tapped word ID: $wordId"),
-        onFootnoteTapped: (text) => print("Footnote content: $text"),
-        onSelectionRequested: (wordId) {
-           // Logic to handle selection start (e.g. highlight the whole verse)
-        },
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: UsfmWidget(
+            verseLines: lines,
+            selectionController: selectionController,
+            // Define visual styles for USFM tags
+            styleBuilder: (format) {
+              return UsfmParagraphStyle.usfmDefaults(
+                format: format,
+                baseStyle: const TextStyle(fontSize: 18, color: Colors.black),
+              );
+            },
+            // Handle Interactions
+            onWordTapped: (wordId) => print("Tapped word ID: $wordId"),
+            onFootnoteTapped: (text) => print("Footnote content: $text"),
+            onSelectionRequested: (wordId) {
+              // Logic to handle selection start (e.g. highlight the whole verse)
+            },
+          ),
+        ),
       ),
     );
   }
