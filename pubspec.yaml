@@ -22,3 +22,7 @@ topics:
   - bible
   - usfm
   - widget
+
+screenshots:
+  - description: 'Complex USFM Layout rendering poetry and footnotes'
+    path: screenshots/usfm_layout.png
