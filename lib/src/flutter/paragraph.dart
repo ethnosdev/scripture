@@ -2,12 +2,23 @@ import 'dart:math';
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:scripture/src/core/highlight_range.dart';
 
 import 'selection_controller.dart';
 import 'space_widget.dart';
 import 'text_atom_widget.dart';
 import 'word.dart';
+
+class HighlightRange {
+  final String startId;
+  final String endId;
+  final Color color;
+
+  const HighlightRange({
+    required this.startId,
+    required this.endId,
+    required this.color,
+  });
+}
 
 class ParagraphWidget extends MultiChildRenderObjectWidget {
   final double firstLineIndent;

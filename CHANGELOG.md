@@ -1,4 +1,8 @@
-## 0.1.0
+## 0.1.1 - 2025-12-06
+
+- Move HighlightRange out of scripture_core because it has a dart:ui dependency.
+
+## 0.1.0 - 2025-12-06
 
 - **Initial release.**
 - Added core rendering engine using custom `RenderBox` implementations (`PassageWidget`, `ParagraphWidget`, `WordWidget`).
