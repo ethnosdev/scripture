@@ -1,16 +1,18 @@
 # Scripture
 
+A Flutter package designed for rendering interactive, selectable, and structured text. While optimized for [USFM](https://ubsicap.github.io/usfm/) (Bible) data, its core rendering engine is flexible enough for any application requiring precise, word-level interaction and complex layout management. (RTL layout still needs to be added.)
+
+Unlike standard Flutter text widgets, `scripture` renders text as interactive words, allowing you to bind database IDs to specific words, handle precise multi-word selection, and manage footnotes or verse numbers.
+
 <div align="center">
   <img src="./screenshots/usfm_layout.png" width="300" alt="Scripture Demo" />
   <br />
   <b>Complex USFM layout with poetry and footnotes</b>
 </div>
 
-A Flutter package designed for rendering interactive, selectable, and structured text. While optimized for [USFM](https://ubsicap.github.io/usfm/) (Bible) data, its core rendering engine is flexible enough for any application requiring precise, word-level interaction and complex layout management. (RTL layout still needs to be added.)
+## Notice
 
-Unlike standard Flutter text widgets, `scripture` renders text as interactive words, allowing you to bind database IDs to specific words, handle precise multi-word selection, and manage footnotes or verse numbers.
-
-> **Warning**: This package is still in early development and breaking changes are likely.
+This package is still in early development and breaking changes are likely.
 
 ## Features
 
