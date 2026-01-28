@@ -1,3 +1,7 @@
+## 0.2.1 - 2026-01-28
+
+- Fix paragraph meaning. 
+
 ## 0.2.0 - 2026-01-28
 
 - Add support for \p paragraph marker.

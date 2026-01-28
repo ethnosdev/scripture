@@ -1,13 +1,13 @@
 /// Defines the formatting for a paragraph of text.
 enum ParagraphFormat {
+  /// paragraph indentation
+  p('p'),
+
   /// margin, no indentation
   m('m'),
 
   /// break, blank vertical space
   b('b'),
-
-  /// paragraph break
-  p('p'),
 
   /// poetry indentation level 1
   q1('q1'),

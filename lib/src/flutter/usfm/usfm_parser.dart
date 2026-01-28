@@ -17,7 +17,6 @@ class UsfmParser {
       // Logic from your _buildPassage method
       switch (line.format) {
         case ParagraphFormat.b:
-        case ParagraphFormat.p:
           passage.commit([], line.format);
         case ParagraphFormat.r:
           if (passage.paragraphs.isNotEmpty &&
@@ -25,6 +24,7 @@ class UsfmParser {
             final footnote = Footnote(line.text);
             passage.paragraphs.last.content.add(footnote);
           }
+        case ParagraphFormat.p:
         case ParagraphFormat.m:
         case ParagraphFormat.pmo:
           if (line.verse != currentVerseNum) {

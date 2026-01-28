@@ -54,9 +54,9 @@ class UsfmParagraphStyle {
           fontStyle: FontStyle.italic,
           color: baseStyle.color?.withValues(alpha: 0.6),
         );
+      case ParagraphFormat.p:
       case ParagraphFormat.m:
       case ParagraphFormat.b:
-      case ParagraphFormat.p:
       case ParagraphFormat.q1:
       case ParagraphFormat.q2:
       case ParagraphFormat.pmo:
@@ -96,9 +96,10 @@ class UsfmParagraphStyle {
       case ParagraphFormat.li2:
         indent1 = 60.0;
         indent2 = 100.0;
+      case ParagraphFormat.p:
+        indent1 = 20.0;
       case ParagraphFormat.m:
       case ParagraphFormat.b:
-      case ParagraphFormat.p:
       case ParagraphFormat.s1:
       case ParagraphFormat.s2:
       case ParagraphFormat.qa:
