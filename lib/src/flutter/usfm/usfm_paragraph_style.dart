@@ -56,6 +56,7 @@ class UsfmParagraphStyle {
         );
       case ParagraphFormat.m:
       case ParagraphFormat.b:
+      case ParagraphFormat.p:
       case ParagraphFormat.q1:
       case ParagraphFormat.q2:
       case ParagraphFormat.pmo:
@@ -97,6 +98,7 @@ class UsfmParagraphStyle {
         indent2 = 100.0;
       case ParagraphFormat.m:
       case ParagraphFormat.b:
+      case ParagraphFormat.p:
       case ParagraphFormat.s1:
       case ParagraphFormat.s2:
       case ParagraphFormat.qa:

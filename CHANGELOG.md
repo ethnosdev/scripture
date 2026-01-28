@@ -1,3 +1,7 @@
+## 0.2.0 - 2026-01-28
+
+- Add support for \p paragraph marker.
+
 ## 0.1.1 - 2025-12-06
 
 - Move HighlightRange out of scripture_core because it has a dart:ui dependency.

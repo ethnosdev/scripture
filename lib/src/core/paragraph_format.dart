@@ -6,6 +6,9 @@ enum ParagraphFormat {
   /// break, blank vertical space
   b('b'),
 
+  /// paragraph break
+  p('p'),
+
   /// poetry indentation level 1
   q1('q1'),
 
@@ -69,6 +72,7 @@ enum ParagraphFormat {
     switch (this) {
       case m:
       case b:
+      case p:
       case q1:
       case q2:
       case pmo:
