@@ -39,6 +39,7 @@ class UsfmParagraphStyle {
       case ParagraphFormat.d:
       case ParagraphFormat.r:
       case ParagraphFormat.s2:
+      case ParagraphFormat.sp:
         style = baseStyle.copyWith(fontStyle: FontStyle.italic);
       case ParagraphFormat.qa:
       case ParagraphFormat.s1:
@@ -61,7 +62,9 @@ class UsfmParagraphStyle {
           color: baseStyle.color?.withValues(alpha: 0.6),
         );
       case ParagraphFormat.p:
+      case ParagraphFormat.pi1:
       case ParagraphFormat.m:
+      case ParagraphFormat.mi:
       case ParagraphFormat.b:
       case ParagraphFormat.q1:
       case ParagraphFormat.q2:
@@ -94,6 +97,7 @@ class UsfmParagraphStyle {
       case ParagraphFormat.qr:
         align = TextAlign.right;
       case ParagraphFormat.pmo:
+      case ParagraphFormat.mi:
         indent1 = 20.0;
         indent2 = 20.0;
       case ParagraphFormat.q1:
@@ -106,11 +110,15 @@ class UsfmParagraphStyle {
         indent2 = 100.0;
       case ParagraphFormat.p:
         indent1 = 20.0;
+      case ParagraphFormat.pi1:
+        indent1 = 40.0;
+        indent2 = 20.0;
       case ParagraphFormat.m:
       case ParagraphFormat.b:
       case ParagraphFormat.s1:
       case ParagraphFormat.s2:
       case ParagraphFormat.qa:
+      case ParagraphFormat.sp:
         // use default alignment and indents
         break;
     }

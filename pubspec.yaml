@@ -1,6 +1,6 @@
 name: scripture
 description: A text layout engine optimized for USFM Bible data, featuring custom paragraph formatting and word-level interactivity.
-version: 0.2.1
+version: 0.3.0
 repository: https://github.com/ethnosdev/scripture
 
 environment:

@@ -1,7 +1,10 @@
-## 0.2.1 - 2026-01-28
+## 0.3.0 - 2026-01-29
 
 - Fix paragraph meaning. 
 - Add support for ms1 and ms2 tags.
+- Add support for pi1 tags.
+- Add support for mi tags.
+- Add support for sp tags.
 
 ## 0.2.0 - 2026-01-28
 

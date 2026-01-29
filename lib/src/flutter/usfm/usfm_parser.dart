@@ -25,7 +25,9 @@ class UsfmParser {
             passage.paragraphs.last.content.add(footnote);
           }
         case ParagraphFormat.p:
+        case ParagraphFormat.pi1:
         case ParagraphFormat.m:
+        case ParagraphFormat.mi:
         case ParagraphFormat.pmo:
           if (line.verse != currentVerseNum) {
             passage.append([VerseNumber(line.verse.toString())], line.format);
@@ -61,6 +63,7 @@ class UsfmParser {
         case ParagraphFormat.ms2:
         case ParagraphFormat.mr:
         case ParagraphFormat.qa:
+        case ParagraphFormat.sp:
           if (!showHeadings) {
             passage.commit();
             continue;

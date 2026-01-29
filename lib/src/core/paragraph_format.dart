@@ -1,10 +1,23 @@
 /// Defines the formatting for a paragraph of text.
 enum ParagraphFormat {
-  /// paragraph indentation
+  /// paragraph
+  ///
+  /// The first line is indented and subsequent lines are not.
   p('p'),
+
+  /// indented paragraph level 1
+  ///
+  /// Similar indentation style as p but everything is further indented.
+  /// That is, first line is indented extra and subsequent lines also indented.
+  pi1('pi1'),
 
   /// margin, no indentation
   m('m'),
+
+  /// indented flush left paragraph
+  ///
+  /// Similar indentation style as m but everything is further indented.
+  mi('mi'),
 
   /// break, blank vertical space
   b('b'),
@@ -61,7 +74,10 @@ enum ParagraphFormat {
   mr('mr'),
 
   /// Acrostic Heading (Psalm 119)
-  qa('qa');
+  qa('qa'),
+
+  /// Speaker Identification (Song of Solomon / Job)
+  sp('sp');
 
   /// The stable string value of the enum, used for database storage.
   final String id;
@@ -76,9 +92,11 @@ enum ParagraphFormat {
   /// as opposed to headings, titles, or other metadata.
   bool get isBiblicalText {
     switch (this) {
-      case m:
-      case b:
       case p:
+      case pi1:
+      case m:
+      case mi:
+      case b:
       case q1:
       case q2:
       case pmo:
@@ -96,6 +114,7 @@ enum ParagraphFormat {
       case ms2:
       case mr:
       case qa:
+      case sp:
         return false;
     }
   }
