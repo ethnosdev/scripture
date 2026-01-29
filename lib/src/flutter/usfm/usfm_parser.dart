@@ -57,6 +57,8 @@ class UsfmParser {
         case ParagraphFormat.s1:
         case ParagraphFormat.s2:
         case ParagraphFormat.ms:
+        case ParagraphFormat.ms1:
+        case ParagraphFormat.ms2:
         case ParagraphFormat.mr:
         case ParagraphFormat.qa:
           if (!showHeadings) {

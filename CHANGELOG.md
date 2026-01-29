@@ -1,6 +1,7 @@
 ## 0.2.1 - 2026-01-28
 
 - Fix paragraph meaning. 
+- Add support for ms1 and ms2 tags.
 
 ## 0.2.0 - 2026-01-28
 

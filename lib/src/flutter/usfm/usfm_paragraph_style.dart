@@ -44,8 +44,14 @@ class UsfmParagraphStyle {
       case ParagraphFormat.s1:
         style = baseStyle.copyWith(fontWeight: FontWeight.bold);
       case ParagraphFormat.ms:
+      case ParagraphFormat.ms1:
         style = baseStyle.copyWith(
           fontSize: (baseStyle.fontSize ?? 14) * 1.5,
+          fontWeight: FontWeight.bold,
+        );
+      case ParagraphFormat.ms2:
+        style = baseStyle.copyWith(
+          fontSize: (baseStyle.fontSize ?? 14) * 1.2,
           fontWeight: FontWeight.bold,
         );
       case ParagraphFormat.mr:
@@ -82,6 +88,8 @@ class UsfmParagraphStyle {
       case ParagraphFormat.r:
       case ParagraphFormat.mr:
       case ParagraphFormat.ms:
+      case ParagraphFormat.ms1:
+      case ParagraphFormat.ms2:
         align = TextAlign.center;
       case ParagraphFormat.qr:
         align = TextAlign.right;

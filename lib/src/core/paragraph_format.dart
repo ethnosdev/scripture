@@ -51,6 +51,12 @@ enum ParagraphFormat {
   /// major section (Psalms)
   ms('ms'),
 
+  /// Major Section Level 1 (Added)
+  ms1('ms1'),
+
+  /// Major Section Level 2 (Added)
+  ms2('ms2'),
+
   /// major section range (Psalms)
   mr('mr'),
 
@@ -86,6 +92,8 @@ enum ParagraphFormat {
       case s1:
       case s2:
       case ms:
+      case ms1:
+      case ms2:
       case mr:
       case qa:
         return false;
