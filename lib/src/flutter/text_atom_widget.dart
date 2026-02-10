@@ -10,12 +10,12 @@ class TextAtomWidget extends MultiChildRenderObjectWidget {
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return RenderTextAtom();
+    return RenderTextAtom(textDirection: Directionality.of(context));
   }
 
   @override
   void updateRenderObject(BuildContext context, RenderTextAtom renderObject) {
-    // No properties to update on RenderTextAtom itself
+    renderObject.textDirection = Directionality.of(context);
   }
 }
 
@@ -25,6 +25,16 @@ class RenderTextAtom extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, TextAtomParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, TextAtomParentData> {
+  RenderTextAtom({TextDirection textDirection = TextDirection.ltr})
+    : _textDirection = textDirection;
+
+  TextDirection _textDirection;
+  set textDirection(TextDirection value) {
+    if (_textDirection == value) return;
+    _textDirection = value;
+    markNeedsLayout();
+  }
+
   /// Returns the Word ID if the [localOffset] hits a RenderWord child.
   int? getWordAtOffset(Offset localOffset) {
     // Iterate children in reverse (standard hit-test order)
@@ -46,8 +56,6 @@ class RenderTextAtom extends RenderBox
         if (child is RenderWord) {
           return child.id;
         }
-        // If we hit a Footnote or VerseNumber, we return null immediately
-        // so we don't accidentally select a word "under" it (unlikely in this layout)
         return null;
       }
 
@@ -68,16 +76,36 @@ class RenderTextAtom extends RenderBox
     double currentX = 0.0;
     double maxLineHeight = 0.0;
 
+    // 1. First pass: Layout children and position them logically (LTR)
     RenderBox? child = firstChild;
     while (child != null) {
       child.layout(const BoxConstraints(), parentUsesSize: true);
-      (child.parentData as BoxParentData).offset = Offset(currentX, 0);
+
+      final childParentData = child.parentData as TextAtomParentData;
+      childParentData.offset = Offset(currentX, 0);
+
       currentX += child.size.width;
       maxLineHeight = max(maxLineHeight, child.size.height);
-      child = childAfter(child);
+      child = childParentData.nextSibling;
     }
 
     size = Size(currentX, maxLineHeight);
+
+    // 2. Second pass: If RTL, flip the x-coordinates relative to the total width.
+    // This moves the first child (e.g. Verse Number) to the far Right.
+    if (_textDirection == TextDirection.rtl) {
+      child = firstChild;
+      while (child != null) {
+        final childParentData = child.parentData as TextAtomParentData;
+
+        // NewX = ContainerWidth - OriginalX - ChildWidth
+        final flippedX =
+            size.width - childParentData.offset.dx - child.size.width;
+
+        childParentData.offset = Offset(flippedX, 0);
+        child = childParentData.nextSibling;
+      }
+    }
   }
 
   @override

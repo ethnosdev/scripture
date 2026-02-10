@@ -1,3 +1,7 @@
+## 0.4.0 - 2026-02-10
+
+- Add RTL directionality support.
+
 ## 0.3.0 - 2026-01-29
 
 - Fix paragraph meaning. 

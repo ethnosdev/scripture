@@ -16,7 +16,12 @@ class WordWidget extends LeafRenderObjectWidget {
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return RenderWord(text: text, id: id, style: style);
+    return RenderWord(
+      text: text,
+      id: id,
+      style: style,
+      textDirection: Directionality.of(context),
+    );
   }
 
   @override
@@ -27,18 +32,24 @@ class WordWidget extends LeafRenderObjectWidget {
     renderObject
       ..text = text
       ..id = id
-      ..style = style;
+      ..style = style
+      ..textDirection = Directionality.of(context);
   }
 }
 
 class RenderWord extends RenderBox {
-  RenderWord({required String text, required int id, required TextStyle style})
-    : _text = text,
-      _id = id,
-      _style = style {
+  RenderWord({
+    required String text,
+    required int id,
+    required TextStyle style,
+    required TextDirection textDirection,
+  }) : _text = text,
+       _id = id,
+       _style = style,
+       _textDirection = textDirection {
     _textPainter = TextPainter(
       text: TextSpan(text: _text, style: _style),
-      textDirection: TextDirection.ltr,
+      textDirection: _textDirection,
     );
   }
 
@@ -70,6 +81,15 @@ class RenderWord extends RenderBox {
     markNeedsLayout();
   }
 
+  TextDirection _textDirection;
+  TextDirection get textDirection => _textDirection;
+  set textDirection(TextDirection value) {
+    if (_textDirection == value) return;
+    _textDirection = value;
+    _textPainter.textDirection = value;
+    markNeedsLayout();
+  }
+
   @override
   void performLayout() {
     _textPainter.layout(minWidth: 0, maxWidth: constraints.maxWidth);
@@ -79,5 +99,10 @@ class RenderWord extends RenderBox {
   @override
   void paint(PaintingContext context, Offset offset) {
     _textPainter.paint(context.canvas, offset);
+  }
+
+  @override
+  bool hitTestSelf(Offset position) {
+    return true;
   }
 }

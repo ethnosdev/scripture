@@ -112,12 +112,19 @@ class _UsfmWidgetState extends State<UsfmWidget> {
   ) {
     final children = <Widget>[];
 
+    final direction = Directionality.of(context);
+
     for (final paragraph in paragraphs) {
       // 1. Get the complete style/layout definition
       final pStyle = widget.styleBuilder(paragraph.format);
 
       // 2. Build children using the style
-      final pChildren = _getParagraphChildren(context, paragraph, pStyle);
+      final pChildren = _getParagraphChildren(
+        context,
+        paragraph,
+        pStyle,
+        direction,
+      );
 
       // 3. Handle spacing (b) or standard paragraph
       if (paragraph.format == ParagraphFormat.b) {
@@ -164,6 +171,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
     BuildContext context,
     UsfmParagraph paragraph,
     UsfmParagraphStyle pStyle,
+    TextDirection direction,
   ) {
     final widgets = <Widget>[];
     final elements = paragraph.content;
@@ -189,7 +197,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             VerseNumberWidget(
               number: current.number,
               style: verseStyle,
-              padding: const EdgeInsets.only(right: 4.0),
+              padding: EdgeInsetsDirectional.only(end: 4.0).resolve(direction),
             ),
           );
         }

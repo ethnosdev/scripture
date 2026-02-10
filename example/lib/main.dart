@@ -31,20 +31,17 @@ class BiblePage extends StatefulWidget {
 }
 
 class _BiblePageState extends State<BiblePage> {
-  // 1. The Controller manages selection state (start/end IDs)
   final ScriptureSelectionController _selectionController =
       ScriptureSelectionController();
 
   List<UsfmLine> _lines = [];
-  bool _isLoading = true;
+  bool _isRtl = false;
 
   @override
   void initState() {
     super.initState();
-    // Load the data (simulating a database fetch)
     _loadScriptureData();
 
-    // Listen to selection changes to update the UI (e.g., show copy button)
     _selectionController.addListener(() {
       if (mounted) setState(() {});
     });
@@ -57,26 +54,39 @@ class _BiblePageState extends State<BiblePage> {
   }
 
   Future<void> _loadScriptureData() async {
-    // Simulate DB delay
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    // Convert raw data to UsfmLine objects
-    final data = MockDatabase.getGenesisOne();
+    // Choose data based on language toggle
+    final data = _isRtl
+        ? MockDatabase.getArabicGenesisOne()
+        : MockDatabase.getGenesisOne();
 
     if (mounted) {
       setState(() {
         _lines = data;
-        _isLoading = false;
+        _selectionController.clear();
       });
     }
+  }
+
+  void _toggleLanguage() {
+    setState(() {
+      _isRtl = !_isRtl;
+    });
+    _loadScriptureData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Genesis 1'),
+        title: Text(_isRtl ? 'التكوين ١' : 'Genesis 1'),
         actions: [
+          // Language Switcher Button
+          TextButton.icon(
+            onPressed: _toggleLanguage,
+            icon: const Icon(Icons.language),
+            label: Text(_isRtl ? "LTR" : "RTL"),
+          ),
+
           if (_selectionController.hasSelection) ...[
             IconButton(
               icon: const Icon(Icons.copy),
@@ -91,69 +101,61 @@ class _BiblePageState extends State<BiblePage> {
           ],
         ],
       ),
-      body: _isLoading
-          ? const SizedBox()
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                // 2. The Main Widget
-                child: UsfmWidget(
-                  verseLines: _lines,
-                  selectionController: _selectionController,
-
-                  // A. Styling: Define how tags (s1, p, q1) look
-                  styleBuilder: (format) {
-                    // You can create completely custom styles, or use the defaults
-                    // provided by the package and override specific properties.
-                    return UsfmParagraphStyle.usfmDefaults(
-                      format: format,
-                      baseStyle: const TextStyle(
-                        fontSize: 18,
-                        height: 1.6,
-                        color: Colors.black87,
+      // Directionality is crucial here.
+      // It propagates the RTL setting down to the Paragraph and TextAtom render objects.
+      body: Directionality(
+        textDirection: _isRtl ? TextDirection.rtl : TextDirection.ltr,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: UsfmWidget(
+              verseLines: _lines,
+              selectionController: _selectionController,
+              styleBuilder: (format) {
+                return UsfmParagraphStyle.usfmDefaults(
+                  format: format,
+                  baseStyle: TextStyle(
+                    fontSize: 20,
+                    height: 1.6,
+                    color: Colors.black87,
+                    fontFamily: _isRtl ? 'Arial' : null,
+                  ),
+                );
+              },
+              onWordTapped: (wordId) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Tapped word ID: $wordId'),
+                    duration: const Duration(milliseconds: 500),
+                  ),
+                );
+              },
+              onFootnoteTapped: (text) {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(_isRtl ? 'حاشية' : 'Footnote'),
+                    content: Text(text),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(_isRtl ? 'إغلاق' : 'Close'),
                       ),
-                    );
-                  },
-
-                  // B. Handle Word Taps (e.g., Open Dictionary)
-                  onWordTapped: (wordId) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Tapped word ID: $wordId'),
-                        duration: const Duration(milliseconds: 500),
-                      ),
-                    );
-                  },
-
-                  // C. Handle Footnotes (e.g., Show Dialog)
-                  onFootnoteTapped: (text) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Footnote'),
-                        content: Text(text),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Close'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-
-                  // D. Handle Selection Gestures (Drag/Long Press)
-                  onSelectionRequested: (wordId) {
-                    // Logic to select the verse containing this word
-                    ScriptureLogic.highlightVerse(
-                      _selectionController,
-                      _lines,
-                      wordId,
-                    );
-                  },
-                ),
-              ),
+                    ],
+                  ),
+                );
+              },
+              onSelectionRequested: (wordId) {
+                ScriptureLogic.highlightVerse(
+                  _selectionController,
+                  _lines,
+                  wordId,
+                );
+              },
             ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -166,11 +168,9 @@ class _BiblePageState extends State<BiblePage> {
   }
 }
 
-/// A Mock helper to represent your Database Layer.
 class MockDatabase {
+  // Original English Data
   static List<UsfmLine> getGenesisOne() {
-    // In a real app, this comes from SQLite.
-    // The format matches the ParagraphFormat enum in scripture_core.dart
     return [
       UsfmLine(
         bookChapterVerse: 1001000,
@@ -199,7 +199,6 @@ class MockDatabase {
         text: "The First Day",
         format: ParagraphFormat.s2,
       ),
-      // Note: This line contains USFM footnote tokens: \f ... \f*
       UsfmLine(
         bookChapterVerse: 1001003,
         text:
@@ -251,6 +250,51 @@ class MockDatabase {
         bookChapterVerse: 1001008,
         text: "And there was evening, and there was morning—the second day.",
         format: ParagraphFormat.pmo,
+      ),
+    ];
+  }
+
+  // Arabic Van Dyke Data (with varied styles)
+  static List<UsfmLine> getArabicGenesisOne() {
+    return [
+      // Major Section Heading (s1)
+      UsfmLine(
+        bookChapterVerse: 1001000,
+        text: "البدء",
+        format: ParagraphFormat.s1,
+      ),
+      // Standard Paragraph (p) - Verse 1
+      UsfmLine(
+        bookChapterVerse: 1001001,
+        text: "فِي ٱلْبَدْءِ خَلَقَ ٱللهُ ٱلسَّمَاوَاتِ وَٱلْأَرْضَ.",
+        format: ParagraphFormat.p,
+      ),
+      // Standard Paragraph (p) - Verse 2
+      UsfmLine(
+        bookChapterVerse: 1001002,
+        text:
+            "وَكَانَتِ ٱلْأَرْضُ خَرِبَةً وَخَالِيَةً، وَعَلَى وَجْهِ ٱلْغَمْرِ ظُلْمَةٌ، وَرُوحُ ٱللهِ يَرِفُّ عَلَى وَجْهِ ٱلْمِيَاهِ.",
+        format: ParagraphFormat.p,
+      ),
+      // Standard Paragraph (p) - Verse 3
+      UsfmLine(
+        bookChapterVerse: 1001003,
+        text: "وَقَالَ ٱللهُ: «لِيَكُنْ نُورٌ»، فَكَانَ نُورٌ.",
+        format: ParagraphFormat.p,
+      ),
+      // Verse 4
+      UsfmLine(
+        bookChapterVerse: 1001004,
+        text:
+            "وَرَأَى ٱللهُ ٱلنُّورَ أَنَّهُ حَسَنٌ. وَفَصَلَ ٱللهُ بَيْنَ ٱلنُّورِ وَٱلظُّلْمَةِ.",
+        format: ParagraphFormat.p,
+      ),
+      // Verse 5
+      UsfmLine(
+        bookChapterVerse: 1001005,
+        text:
+            "وَدَعَا ٱللهُ ٱلنُّورَ نَهَارًا، وَٱلظُّلْمَةُ دَعَاهَا لَيْلًا. وَكَانَ مَسَاءٌ وَكَانَ صَبَاحٌ يَوْمًا وَاحِدًا.",
+        format: ParagraphFormat.p,
       ),
     ];
   }

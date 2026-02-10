@@ -51,6 +51,7 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
       highlightColor: highlightColor,
       selectable: selectable,
       highlights: highlights,
+      textDirection: Directionality.of(context),
     );
   }
 
@@ -66,7 +67,8 @@ class ParagraphWidget extends MultiChildRenderObjectWidget {
       ..selectionController = selectionController
       ..highlightColor = highlightColor
       ..selectable = selectable
-      ..highlights = highlights;
+      ..highlights = highlights
+      ..textDirection = Directionality.of(context);
   }
 }
 
@@ -82,13 +84,15 @@ class RenderParagraph extends RenderBox
     Color highlightColor = const Color(0x4D2196F3),
     bool selectable = true,
     List<HighlightRange> highlights = const [],
+    required TextDirection textDirection,
   }) : _firstLineIndent = firstLineIndent,
        _subsequentLinesIndent = subsequentLinesIndent,
        _textAlign = textAlign,
        _selectionController = selectionController,
        _highlightColor = highlightColor,
        _highlights = highlights,
-       _selectable = selectable;
+       _selectable = selectable,
+       _textDirection = textDirection;
 
   double _firstLineIndent;
   double get firstLineIndent => _firstLineIndent;
@@ -146,6 +150,14 @@ class RenderParagraph extends RenderBox
     if (_highlights == value) return;
     _highlights = value;
     markNeedsPaint();
+  }
+
+  TextDirection _textDirection;
+  TextDirection get textDirection => _textDirection;
+  set textDirection(TextDirection value) {
+    if (_textDirection == value) return;
+    _textDirection = value;
+    markNeedsLayout();
   }
 
   @override
@@ -234,7 +246,13 @@ class RenderParagraph extends RenderBox
     }
 
     final double paragraphWidth = constraints.maxWidth;
-    double currentX = _firstLineIndent;
+
+    // We calculate "Logical X".
+    // In LTR: 0 is Left.
+    // In RTL: 0 is Right.
+    // We map Logical -> Physical at the very end.
+
+    double logicalX = _firstLineIndent;
     double currentY = 0;
     double maxLineHeight = 0;
 
@@ -251,95 +269,126 @@ class RenderParagraph extends RenderBox
           ? _firstLineIndent
           : _subsequentLinesIndent;
 
-      // Skip leading spaces at the beginning of a line.
-      final bool isAtStartOfLine = currentX == currentLineIndent;
+      // Skip leading spaces (Logical Start of line)
+      final bool isAtStartOfLine = logicalX == currentLineIndent;
       final bool isChildASpace = child is RenderSpace;
+
       if (isChildASpace && isAtStartOfLine) {
         child = (child.parentData as ParagraphParentData).nextSibling;
         continue;
       }
 
-      // Check if the current child overflows the line.
-      if (currentX > currentLineIndent &&
-          currentX + childWidth > paragraphWidth) {
-        // 1. Align the completed line (shift children if Center/Right)
+      // Check overflow
+      if (logicalX > currentLineIndent &&
+          logicalX + childWidth > paragraphWidth) {
+        // 1. Align the completed line
         _alignLine(
           currentLineChildren,
           currentLineIndent,
-          currentX,
+          logicalX,
           paragraphWidth,
         );
+
+        // 2. Resolve BiDi positions for this line (Flip if RTL)
+        _resolveLinePositions(currentLineChildren, paragraphWidth);
+
         currentLineChildren.clear();
 
-        // 2. Move to next line
-        currentX = _subsequentLinesIndent;
+        // 3. Move to next line
+        logicalX = _subsequentLinesIndent;
         currentY += maxLineHeight;
         maxLineHeight = 0;
 
-        // Re-check for leading space after wrapping. If so, skip it.
         if (isChildASpace) {
           child = (child.parentData as ParagraphParentData).nextSibling;
           continue;
         }
       }
 
-      // Position the child (initially Left Aligned)
+      // Position child at Logical X initially
       final childParentData = child.parentData! as ParagraphParentData;
-      childParentData.offset = Offset(currentX, currentY);
+      childParentData.offset = Offset(logicalX, currentY);
 
-      // Add to buffer for later alignment
       currentLineChildren.add(child);
-
-      // Update max line height for the current line.
       maxLineHeight = max(maxLineHeight, childHeight);
-
-      // Advance the horizontal cursor.
-      currentX += childWidth;
+      logicalX += childWidth;
 
       child = childParentData.nextSibling;
     }
 
-    // Align the final line
+    // Handle last line
     final double lastLineIndent = (currentY == 0)
         ? _firstLineIndent
         : _subsequentLinesIndent;
-    _alignLine(currentLineChildren, lastLineIndent, currentX, paragraphWidth);
+
+    _alignLine(currentLineChildren, lastLineIndent, logicalX, paragraphWidth);
+    _resolveLinePositions(currentLineChildren, paragraphWidth);
 
     size = Size(paragraphWidth, currentY + maxLineHeight);
   }
 
+  /// Adjusts the Logical X offsets of children based on alignment.
   void _alignLine(
     List<RenderBox> lineChildren,
     double indent,
     double usedWidth,
     double maxWidth,
   ) {
-    // only handling LTR text for now
-    if (_textAlign == TextAlign.left ||
-        _textAlign == TextAlign.start ||
-        lineChildren.isEmpty) {
-      return;
-    }
-    // Calculate empty space on the line.
-    // usedWidth includes the indent and all words.
-    // Example: Max 100. Indent 10. Words take 50. usedWidth = 60.
-    // Free space = 100 - 60 = 40.
-    final double freeSpace = maxWidth - usedWidth;
+    if (lineChildren.isEmpty) return;
 
+    final double freeSpace = maxWidth - usedWidth;
     double shift = 0;
 
-    if (_textAlign == TextAlign.center) {
-      shift = freeSpace / 2;
-    } else if (_textAlign == TextAlign.right) {
-      shift = freeSpace;
+    switch (_textAlign) {
+      case TextAlign.left:
+        // LTR: 0 shift.
+        // RTL: Shift all the way to end so logic 0 becomes physical Left.
+        if (_textDirection == TextDirection.rtl) {
+          shift = freeSpace;
+        }
+        break;
+      case TextAlign.right:
+        // LTR: Shift to end.
+        // RTL: 0 shift (Logical Start is Physical Right).
+        if (_textDirection == TextDirection.ltr) {
+          shift = freeSpace;
+        }
+        break;
+      case TextAlign.center:
+        shift = freeSpace / 2;
+        break;
+      case TextAlign.justify:
+        // Simple fallback for now
+        break;
+      case TextAlign.start:
+        // Always at logical 0
+        break;
+      case TextAlign.end:
+        // Always at logical end
+        shift = freeSpace;
+        break;
     }
 
     if (shift == 0) return;
 
-    // Apply shift to all children on this line
     for (final child in lineChildren) {
       final parentData = child.parentData as ParagraphParentData;
       parentData.offset += Offset(shift, 0);
+    }
+  }
+
+  /// Converts Logical Offsets to Physical Offsets.
+  /// If RTL, flips the X coordinate: PhysicalX = MaxWidth - LogicalX - ChildWidth.
+  void _resolveLinePositions(List<RenderBox> lineChildren, double maxWidth) {
+    if (_textDirection == TextDirection.ltr) return; // No change needed
+
+    for (final child in lineChildren) {
+      final parentData = child.parentData as ParagraphParentData;
+      final logicalX = parentData.offset.dx;
+
+      final physicalX = maxWidth - logicalX - child.size.width;
+
+      parentData.offset = Offset(physicalX, parentData.offset.dy);
     }
   }
 

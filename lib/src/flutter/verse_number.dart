@@ -31,6 +31,7 @@ class VerseNumberWidget extends LeafRenderObjectWidget {
       padding: padding,
       onTap: onTap,
       onLongPress: onLongPress,
+      textDirection: Directionality.of(context),
     );
   }
 
@@ -45,7 +46,8 @@ class VerseNumberWidget extends LeafRenderObjectWidget {
       ..scale = scale
       ..padding = padding
       ..onTap = onTap
-      ..onLongPress = onLongPress;
+      ..onLongPress = onLongPress
+      ..textDirection = Directionality.of(context);
   }
 }
 
@@ -55,6 +57,7 @@ class RenderVerseNumber extends RenderBox {
     required TextStyle style,
     required double scale,
     required EdgeInsets padding,
+    required TextDirection textDirection,
     VerseNumberCallback? onTap,
     VerseNumberCallback? onLongPress,
   }) : _number = number,
@@ -62,9 +65,10 @@ class RenderVerseNumber extends RenderBox {
        _scale = scale,
        _padding = padding,
        _onTap = onTap,
-       _onLongPress = onLongPress {
-    _numberPainter = TextPainter(textDirection: TextDirection.ltr);
-    _baseHeightPainter = TextPainter(textDirection: TextDirection.ltr);
+       _onLongPress = onLongPress,
+       _textDirection = textDirection {
+    _numberPainter = TextPainter(textDirection: _textDirection);
+    _baseHeightPainter = TextPainter(textDirection: _textDirection);
 
     _updatePainters();
 
@@ -146,6 +150,17 @@ class RenderVerseNumber extends RenderBox {
         value(_number);
       }
     };
+  }
+
+  TextDirection _textDirection;
+  TextDirection get textDirection => _textDirection;
+  set textDirection(TextDirection value) {
+    if (_textDirection == value) return;
+    _textDirection = value;
+    _numberPainter.textDirection = value;
+    _baseHeightPainter.textDirection = value;
+    _updatePainters();
+    markNeedsLayout();
   }
 
   /// Creates the derived style for the verse number.
