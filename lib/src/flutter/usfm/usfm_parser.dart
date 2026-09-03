@@ -102,7 +102,12 @@ class UsfmParser {
   static String _extractUsfmFootnoteText(String rawUsfm) {
     var content = rawUsfm.replaceAll(RegExp(r'^\\f\s*[+-]?\s*|\\f\*$'), '');
     content = content.replaceAll(RegExp(r'\\fr\s*[^\\\\]*'), '');
-    content = content.replaceAll(RegExp(r'\\[a-z0-9]+\s*'), '');
+
+    // Remove the machine-readable reference part after the pipe (e.g., |2CO 4:6)
+    // This looks for a pipe and grabs everything up until the \ref* tag.
+    content = content.replaceAll(RegExp(r'\|[^\\]*(?=\\ref\*)'), '');
+
+    content = content.replaceAll(RegExp(r'\\[a-z0-9]+\*?\s*'), '');
     return content.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 }

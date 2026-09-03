@@ -1,3 +1,7 @@
+## 0.5.0 - 2026-09-03
+
+- Strip footnote ref tags.
+
 ## 0.4.0 - 2026-02-10
 
 - Add RTL directionality support.
