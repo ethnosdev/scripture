@@ -51,5 +51,43 @@ void main() {
       // Ensure an asterisk used as normal text isn't accidentally destroyed
       expect(footnote.text, equals('See note * below'));
     });
+
+    test('Preserves and wraps fqa tags cleanly', () {
+      final line = UsfmLine(
+        bookChapterVerse: 19112001,
+        text:
+            r'Hallelujah!\f + \fr 112:1 \ft Or \fqa Hallelu YAH\ft , meaning \fqa Praise the LORD\ft . This psalm is an acrostic poem.\f*',
+        format: ParagraphFormat.q1,
+      );
+
+      final elements = UsfmParser.getWords(line, 0);
+      final footnote = elements.whereType<Footnote>().first;
+
+      expect(
+        footnote.text,
+        equals(
+          r'Or \fqa Hallelu YAH\fqa*, meaning \fqa Praise the LORD\fqa*. This psalm is an acrostic poem.',
+        ),
+      );
+    });
+
+    test('Preserves fqa with word following fqa*', () {
+      final line = UsfmLine(
+        bookChapterVerse: 19003002,
+        text:
+            r'Selah\f + \fr 3:2 \fqa Selah \ft or \fqa Interlude \ft is probably a musical or literary term; here and throughout the Psalms.\f*',
+        format: ParagraphFormat.p,
+      );
+
+      final elements = UsfmParser.getWords(line, 0);
+      final footnote = elements.whereType<Footnote>().first;
+
+      expect(
+        footnote.text,
+        equals(
+          r'\fqa Selah\fqa* or \fqa Interlude\fqa* is probably a musical or literary term; here and throughout the Psalms.',
+        ),
+      );
+    });
   });
 }

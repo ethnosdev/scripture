@@ -1,3 +1,11 @@
+## 0.6.0 - 2026-09-04
+
+- Fix missing footnote issue.
+- Don't add vertical space between consecutive same title headings.
+- Leave \fqa inline tags for downstream apps (for italics within footnotes).
+- Center \qa text by default.
+- Add tests.
+
 ## 0.5.0 - 2026-09-03
 
 - Strip footnote ref tags.

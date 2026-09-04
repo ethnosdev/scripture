@@ -14,7 +14,6 @@ class UsfmParser {
     int currentWordOffset = 0;
 
     for (final line in verseLines) {
-      // Logic from your _buildPassage method
       switch (line.format) {
         case ParagraphFormat.b:
           passage.commit([], line.format);
@@ -107,7 +106,21 @@ class UsfmParser {
     // This looks for a pipe and grabs everything up until the \ref* tag.
     content = content.replaceAll(RegExp(r'\|[^\\]*(?=\\ref\*)'), '');
 
-    content = content.replaceAll(RegExp(r'\\[a-z0-9]+\*?\s*'), '');
+    // Wrap \fqa text with explicit \fqa ...\fqa* so downstream renderers can italicize it
+    content = content.replaceAllMapped(
+      RegExp(r'\\fqa\s*(.*?)(?=\\[a-z0-9*]+|$)'),
+      (m) => '\\fqa ${m[1]!.trim()}\\fqa* ',
+    );
+
+    // Strip other tags (like \ft, \ref, \ref*) but preserve \fqa and \fqa*
+    content = content.replaceAll(RegExp(r'\\(?!fqa\*?)[a-z0-9]+\*?'), '');
+
+    // Normalize whitespace around punctuation
+    content = content.replaceAllMapped(RegExp(r'\s+([,.:;?!])'), (m) => m[1]!);
+    content = content.replaceAllMapped(
+      RegExp(r'\\fqa\*\s+([,.:;?!])'),
+      (m) => '\\fqa*${m[1]!}',
+    );
     return content.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 }

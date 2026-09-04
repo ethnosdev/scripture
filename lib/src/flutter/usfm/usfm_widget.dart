@@ -111,10 +111,15 @@ class _UsfmWidgetState extends State<UsfmWidget> {
     List<UsfmParagraph> paragraphs,
   ) {
     final children = <Widget>[];
-
     final direction = Directionality.of(context);
 
-    for (final paragraph in paragraphs) {
+    for (int i = 0; i < paragraphs.length; i++) {
+      final paragraph = paragraphs[i];
+      final prevParagraph = i > 0 ? paragraphs[i - 1] : null;
+      final nextParagraph = i + 1 < paragraphs.length
+          ? paragraphs[i + 1]
+          : null;
+
       // 1. Get the complete style/layout definition
       final pStyle = widget.styleBuilder(paragraph.format);
 
@@ -132,13 +137,27 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         continue;
       }
 
-      // add spacing before headers
-      if (!paragraph.format.isBiblicalText) {
+      final isTitle = !paragraph.format.isBiblicalText;
+
+      // Check if adjacent paragraphs are titles of the exact same style/format
+      final isSameAsPrev =
+          isTitle &&
+          prevParagraph != null &&
+          !prevParagraph.format.isBiblicalText &&
+          prevParagraph.format == paragraph.format;
+
+      final isSameAsNext =
+          isTitle &&
+          nextParagraph != null &&
+          !nextParagraph.format.isBiblicalText &&
+          nextParagraph.format == paragraph.format;
+
+      // Add spacing before headers (skip if preceded by a title of the same style)
+      if (isTitle && !isSameAsPrev) {
         _addSpacing(children);
       }
 
-      // 4. Create Widget - No giant switch statement needed anymore!
-      // The logic is encapsulated in pStyle
+      // 4. Create Widget
       children.add(
         ParagraphWidget(
           selectionController: widget.selectionController,
@@ -153,9 +172,9 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         ),
       );
 
-      // Add spacing after headers or qr if needed
-      if (!paragraph.format.isBiblicalText ||
-          paragraph.format == ParagraphFormat.qr) {
+      // Add spacing after headers or qr (skip if followed by a title of the same style)
+      final needsSpaceAfter = isTitle || paragraph.format == ParagraphFormat.qr;
+      if (needsSpaceAfter && !isSameAsNext) {
         _addSpacing(children);
       }
     }
@@ -204,6 +223,23 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         atomChildren.add(
           WordWidget(text: next.text, id: next.id, style: style),
         );
+
+        if (i + 2 < elements.length && elements[i + 2] is Footnote) {
+          final footnote = elements[i + 2] as Footnote;
+          final footnoteStyle =
+              widget.footnoteMarkerStyle ??
+              style.copyWith(color: Theme.of(context).colorScheme.primary);
+          atomChildren.add(
+            FootnoteWidget(
+              marker: '*',
+              text: footnote.text,
+              style: footnoteStyle,
+              onTap: widget.onFootnoteTapped,
+            ),
+          );
+          i++;
+        }
+
         atom = TextAtomWidget(children: atomChildren);
         i++;
       } else if (current is Word &&
@@ -229,6 +265,20 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         atom = TextAtomWidget(
           children: [
             WordWidget(text: current.text, id: current.id, style: style),
+          ],
+        );
+      } else if (current is Footnote) {
+        final footnoteStyle =
+            widget.footnoteMarkerStyle ??
+            style.copyWith(color: Theme.of(context).colorScheme.primary);
+        atom = TextAtomWidget(
+          children: [
+            FootnoteWidget(
+              marker: '*',
+              text: current.text,
+              style: footnoteStyle,
+              onTap: widget.onFootnoteTapped,
+            ),
           ],
         );
       } else if (current is VerseNumber) {
