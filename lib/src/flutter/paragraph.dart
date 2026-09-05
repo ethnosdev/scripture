@@ -9,8 +9,8 @@ import 'text_atom_widget.dart';
 import 'word.dart';
 
 class HighlightRange {
-  final String startId;
-  final String endId;
+  final int startId;
+  final int endId;
   final Color color;
 
   const HighlightRange({
@@ -412,11 +412,7 @@ class RenderParagraph extends RenderBox
 
   void _paintPersistentHighlights(PaintingContext context, Offset offset) {
     for (final range in _highlights) {
-      final start = int.tryParse(range.startId);
-      final end = int.tryParse(range.endId);
-      if (start == null || end == null) continue;
-
-      _paintRange(context, offset, start, end, range.color);
+      _paintRange(context, offset, range.startId, range.endId, range.color);
     }
   }
 
@@ -508,8 +504,17 @@ class RenderParagraph extends RenderBox
   ) {
     final id = word.id;
     if (id >= startId && id <= endId) {
-      // Inflate slightly for better visuals (connects tiny gaps between words)
-      collector.add((offset & word.size).inflate(0.5));
+      // Inflate horizontally to connect tiny gaps between words,
+      // but keep vertical bounds exact so stacked paragraphs (e.g. poetry lines)
+      // do not overlap vertically and double-blend translucent colors.
+      collector.add(
+        Rect.fromLTRB(
+          offset.dx - 0.5,
+          offset.dy,
+          offset.dx + word.size.width + 0.5,
+          offset.dy + word.size.height,
+        ),
+      );
     }
   }
 

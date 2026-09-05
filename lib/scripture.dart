@@ -14,3 +14,4 @@ export 'src/flutter/usfm/usfm_parser.dart';
 export 'src/flutter/usfm/usfm_widget.dart';
 export 'src/flutter/usfm/highlight_verse.dart';
 export 'src/flutter/usfm/usfm_paragraph_style.dart';
+export 'src/flutter/note_marker.dart';

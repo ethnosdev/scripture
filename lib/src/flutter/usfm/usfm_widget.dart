@@ -3,6 +3,11 @@ import 'package:scripture/scripture.dart';
 import 'package:scripture/scripture_core.dart';
 
 typedef FootnoteTapCallback = void Function(String footnoteText);
+typedef AmbiguousTapCallback = void Function({
+  required int wordId,
+  required String footnoteText,
+  required String noteId,
+});
 typedef UsfmStyleBuilder = UsfmParagraphStyle Function(ParagraphFormat format);
 
 class UsfmWidget extends StatefulWidget {
@@ -16,6 +21,11 @@ class UsfmWidget extends StatefulWidget {
   final UsfmStyleBuilder styleBuilder;
   final TextStyle? footnoteMarkerStyle;
   final Color? selectionColor;
+  final List<HighlightRange> highlights;
+  final List<NoteMarker> noteMarkers;
+  final NoteTapCallback? onNoteTapped;
+  final AmbiguousTapCallback? onAmbiguousTapped;
+  final TextStyle? noteMarkerStyle;
 
   const UsfmWidget({
     super.key,
@@ -29,6 +39,11 @@ class UsfmWidget extends StatefulWidget {
     this.showHeadings = true,
     this.showVerseNumbers = true,
     this.selectionColor,
+    this.highlights = const [],
+    this.noteMarkers = const [],
+    this.onNoteTapped,
+    this.onAmbiguousTapped,
+    this.noteMarkerStyle,
   });
 
   @override
@@ -90,11 +105,28 @@ class _UsfmWidgetState extends State<UsfmWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final wordNoteMap = {for (final m in widget.noteMarkers) m.wordId: m.id};
+
     return SelectableScripture(
       controller: widget.selectionController,
       onWordTapped: (int wordId) {
-        if (_wordFootnoteMap.containsKey(wordId)) {
+        final hasFootnote = _wordFootnoteMap.containsKey(wordId);
+        final hasNote = wordNoteMap.containsKey(wordId);
+
+        if (hasFootnote && hasNote) {
+          if (widget.onAmbiguousTapped != null) {
+            widget.onAmbiguousTapped!(
+              wordId: wordId,
+              footnoteText: _wordFootnoteMap[wordId]!,
+              noteId: wordNoteMap[wordId]!,
+            );
+          } else {
+            widget.onFootnoteTapped?.call(_wordFootnoteMap[wordId]!);
+          }
+        } else if (hasFootnote) {
           widget.onFootnoteTapped?.call(_wordFootnoteMap[wordId]!);
+        } else if (hasNote) {
+          widget.onNoteTapped?.call(wordNoteMap[wordId]!);
         } else {
           widget.onWordTapped?.call(wordId);
         }
@@ -168,6 +200,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           highlightColor:
               widget.selectionColor ??
               Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+          highlights: widget.highlights,
           children: pChildren,
         ),
       );
@@ -199,6 +232,13 @@ class _UsfmWidgetState extends State<UsfmWidget> {
     final style = pStyle.textStyle;
     final verseStyle = pStyle.verseNumberStyle;
     final double spaceWidth = (style.fontSize ?? 14.0) * 0.28;
+    final noteMap = {for (final m in widget.noteMarkers) m.wordId: m};
+    final noteMarkerStyle = widget.noteMarkerStyle ??
+        widget.footnoteMarkerStyle ??
+        style.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          fontSize: (style.fontSize ?? 14.0) * 0.75,
+        );
 
     for (int i = 0; i < elements.length; i++) {
       final current = elements[i];
@@ -240,6 +280,18 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           i++;
         }
 
+        if (noteMap.containsKey(next.id)) {
+          final note = noteMap[next.id]!;
+          atomChildren.add(
+            NoteMarkerWidget(
+              id: note.id,
+              marker: note.marker,
+              style: noteMarkerStyle,
+              onTap: widget.onNoteTapped,
+            ),
+          );
+        }
+
         atom = TextAtomWidget(children: atomChildren);
         i++;
       } else if (current is Word &&
@@ -249,24 +301,44 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         final footnoteStyle =
             widget.footnoteMarkerStyle ??
             style.copyWith(color: Theme.of(context).colorScheme.primary);
-        atom = TextAtomWidget(
-          children: [
-            WordWidget(text: current.text, id: current.id, style: style),
-            FootnoteWidget(
-              marker: '*',
-              text: next.text,
-              style: footnoteStyle,
-              onTap: widget.onFootnoteTapped,
+        final atomChildren = <Widget>[
+          WordWidget(text: current.text, id: current.id, style: style),
+          FootnoteWidget(
+            marker: '*',
+            text: next.text,
+            style: footnoteStyle,
+            onTap: widget.onFootnoteTapped,
+          ),
+        ];
+        if (noteMap.containsKey(current.id)) {
+          final note = noteMap[current.id]!;
+          atomChildren.add(
+            NoteMarkerWidget(
+              id: note.id,
+              marker: note.marker,
+              style: noteMarkerStyle,
+              onTap: widget.onNoteTapped,
             ),
-          ],
-        );
+          );
+        }
+        atom = TextAtomWidget(children: atomChildren);
         i++;
       } else if (current is Word) {
-        atom = TextAtomWidget(
-          children: [
-            WordWidget(text: current.text, id: current.id, style: style),
-          ],
-        );
+        final atomChildren = <Widget>[
+          WordWidget(text: current.text, id: current.id, style: style),
+        ];
+        if (noteMap.containsKey(current.id)) {
+          final note = noteMap[current.id]!;
+          atomChildren.add(
+            NoteMarkerWidget(
+              id: note.id,
+              marker: note.marker,
+              style: noteMarkerStyle,
+              onTap: widget.onNoteTapped,
+            ),
+          );
+        }
+        atom = TextAtomWidget(children: atomChildren);
       } else if (current is Footnote) {
         final footnoteStyle =
             widget.footnoteMarkerStyle ??

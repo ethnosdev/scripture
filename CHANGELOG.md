@@ -1,3 +1,11 @@
+## 0.7.0 - 2026-09-05
+
+- Change `HighlightRange` startId and endId to `int` for performance and consistency with word IDs.
+- Add `NoteMarker` model and `NoteMarkerWidget` with expanded 44x44 dp hit testing.
+- Add `highlights` and `noteMarkers` support to `UsfmWidget`.
+- Add `onNoteTapped` and `onAmbiguousTapped` callbacks to `UsfmWidget`.
+- Fix highlight double-blending / darker overlapping seams between stacked poetic lines in `ParagraphWidget`.
+
 ## 0.6.0 - 2026-09-04
 
 - Fix missing footnote issue.
