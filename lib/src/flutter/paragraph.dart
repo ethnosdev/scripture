@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import 'passage.dart';
 import 'selection_controller.dart';
 import 'space_widget.dart';
 import 'text_atom_widget.dart';
@@ -202,6 +203,88 @@ class RenderParagraph extends RenderBox
       child = parentData.previousSibling;
     }
     return null;
+  }
+
+  /// Returns the geometry (bounding box and text direction) of the word with [wordId]
+  /// in paragraph coordinates.
+  WordGeometry? getWordGeometry(int wordId) {
+    RenderBox? child = firstChild;
+    while (child != null) {
+      final parentData = child.parentData as ParagraphParentData;
+      if (child is RenderWord && child.id == wordId) {
+        return WordGeometry(
+          rect: parentData.offset & child.size,
+          direction: child.textDirection,
+        );
+      } else if (child is RenderTextAtom) {
+        final geom = child.getWordGeometry(wordId);
+        if (geom != null) {
+          return WordGeometry(
+            rect: geom.rect.shift(parentData.offset),
+            direction: geom.direction,
+          );
+        }
+      }
+      child = parentData.nextSibling;
+    }
+    return null;
+  }
+
+  /// Returns the Word ID closest to [offsetInParagraph].
+  int? getWordClosestToOffset(Offset offsetInParagraph) {
+    int? bestWordId;
+    double bestScore = double.infinity;
+
+    void checkWord(int id, Rect wordRect) {
+      double dyDist = 0;
+      if (offsetInParagraph.dy < wordRect.top) {
+        dyDist = wordRect.top - offsetInParagraph.dy;
+      } else if (offsetInParagraph.dy > wordRect.bottom) {
+        dyDist = offsetInParagraph.dy - wordRect.bottom;
+      }
+
+      double dxDist = 0;
+      if (offsetInParagraph.dx < wordRect.left) {
+        dxDist = wordRect.left - offsetInParagraph.dx;
+      } else if (offsetInParagraph.dx > wordRect.right) {
+        dxDist = offsetInParagraph.dx - wordRect.right;
+      }
+
+      final score = dyDist * 1000.0 + dxDist;
+      if (score < bestScore) {
+        bestScore = score;
+        bestWordId = id;
+      }
+    }
+
+    RenderBox? child = firstChild;
+    while (child != null) {
+      final parentData = child.parentData as ParagraphParentData;
+      if (child is RenderWord) {
+        checkWord(child.id, parentData.offset & child.size);
+      } else if (child is RenderTextAtom) {
+        _collectWordsInAtom(child, parentData.offset, checkWord);
+      }
+      child = parentData.nextSibling;
+    }
+
+    return bestWordId;
+  }
+
+  void _collectWordsInAtom(
+    RenderTextAtom atom,
+    Offset atomOffset,
+    void Function(int id, Rect rect) callback,
+  ) {
+    RenderBox? child = atom.firstChild;
+    while (child != null) {
+      final parentData = child.parentData as TextAtomParentData;
+      if (child is RenderWord) {
+        final rect = (atomOffset + parentData.offset) & child.size;
+        callback(child.id, rect);
+      }
+      child = parentData.nextSibling;
+    }
   }
 
   @override

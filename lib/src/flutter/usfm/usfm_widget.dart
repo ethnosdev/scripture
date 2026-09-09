@@ -21,6 +21,8 @@ class UsfmWidget extends StatefulWidget {
   final UsfmStyleBuilder styleBuilder;
   final TextStyle? footnoteMarkerStyle;
   final Color? selectionColor;
+  final Color? selectionHandleColor;
+  final bool showSelectionHandles;
   final List<HighlightRange> highlights;
   final List<NoteMarker> noteMarkers;
   final NoteTapCallback? onNoteTapped;
@@ -39,6 +41,8 @@ class UsfmWidget extends StatefulWidget {
     this.showHeadings = true,
     this.showVerseNumbers = true,
     this.selectionColor,
+    this.selectionHandleColor,
+    this.showSelectionHandles = true,
     this.highlights = const [],
     this.noteMarkers = const [],
     this.onNoteTapped,
@@ -109,6 +113,8 @@ class _UsfmWidgetState extends State<UsfmWidget> {
 
     return SelectableScripture(
       controller: widget.selectionController,
+      handleColor: widget.selectionHandleColor,
+      showHandles: widget.showSelectionHandles,
       onWordTapped: (int wordId) {
         final hasFootnote = _wordFootnoteMap.containsKey(wordId);
         final hasNote = wordNoteMap.containsKey(wordId);

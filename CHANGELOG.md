@@ -1,3 +1,7 @@
+## 0.8.0 - 2026-09-08
+
+- Add selection handles to selection.
+
 ## 0.7.0 - 2026-09-05
 
 - Change `HighlightRange` startId and endId to `int` for performance and consistency with word IDs.

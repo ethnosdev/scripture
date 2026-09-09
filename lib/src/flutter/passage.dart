@@ -98,7 +98,7 @@ class RenderPassage extends RenderBox
       child = nextChild;
     }
 
-    size = Size(contentWidth, currentY);
+    size = constraints.constrain(Size(contentWidth, currentY));
   }
 
   @override
@@ -140,6 +140,76 @@ class RenderPassage extends RenderBox
     }
     return null;
   }
+
+  /// Returns the geometry (bounding box and text direction) of the word with [wordId]
+  /// in passage coordinates.
+  WordGeometry? getWordGeometry(int wordId) {
+    RenderBox? child = firstChild;
+    while (child != null) {
+      final parentData = child.parentData as PassageParentData;
+      if (child is RenderParagraph) {
+        final geom = child.getWordGeometry(wordId);
+        if (geom != null) {
+          return WordGeometry(
+            rect: geom.rect.shift(parentData.offset),
+            direction: geom.direction,
+          );
+        }
+      }
+      child = parentData.nextSibling;
+    }
+    return null;
+  }
+
+  /// Returns the Word ID at or closest to the given [localOffset].
+  int? getWordAtOrNearOffset(Offset localOffset) {
+    if (firstChild == null) return null;
+
+    final exactHit = getWordAtOffset(localOffset);
+    if (exactHit != null) return exactHit;
+
+    RenderParagraph? closestParagraph;
+    double minDyDistance = double.infinity;
+    Offset closestParagraphOffset = Offset.zero;
+
+    RenderBox? child = firstChild;
+    while (child != null) {
+      final parentData = child.parentData as PassageParentData;
+      if (child is RenderParagraph && child.selectable) {
+        final childTop = parentData.offset.dy;
+        final childBottom = childTop + child.size.height;
+
+        double dyDist = 0;
+        if (localOffset.dy < childTop) {
+          dyDist = childTop - localOffset.dy;
+        } else if (localOffset.dy > childBottom) {
+          dyDist = localOffset.dy - childBottom;
+        }
+
+        if (dyDist < minDyDistance) {
+          minDyDistance = dyDist;
+          closestParagraph = child;
+          closestParagraphOffset = parentData.offset;
+        }
+      }
+      child = parentData.nextSibling;
+    }
+
+    if (closestParagraph == null) return null;
+
+    final offsetInParagraph = localOffset - closestParagraphOffset;
+    return closestParagraph.getWordClosestToOffset(offsetInParagraph);
+  }
+}
+
+class WordGeometry {
+  final Rect rect;
+  final TextDirection direction;
+
+  const WordGeometry({
+    required this.rect,
+    required this.direction,
+  });
 }
 
 class PassageParentData extends ContainerBoxParentData<RenderBox> {}

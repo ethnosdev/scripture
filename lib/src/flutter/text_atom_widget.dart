@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import 'passage.dart';
 import 'word.dart';
 
 class TextAtomWidget extends MultiChildRenderObjectWidget {
@@ -60,6 +61,23 @@ class RenderTextAtom extends RenderBox
       }
 
       child = parentData.previousSibling;
+    }
+    return null;
+  }
+
+  /// Returns the geometry (bounding box and text direction) of the word with [wordId]
+  /// in text atom coordinates.
+  WordGeometry? getWordGeometry(int wordId) {
+    RenderBox? child = firstChild;
+    while (child != null) {
+      final parentData = child.parentData as TextAtomParentData;
+      if (child is RenderWord && child.id == wordId) {
+        return WordGeometry(
+          rect: parentData.offset & child.size,
+          direction: child.textDirection,
+        );
+      }
+      child = parentData.nextSibling;
     }
     return null;
   }
