@@ -4,30 +4,38 @@ import 'package:flutter/widgets.dart';
 
 typedef NoteTapCallback = void Function(String noteId);
 
+/// Default note marker icon (sticky_note_2_outlined from MaterialIcons).
+const IconData defaultNoteIcon =
+    IconData(0xf3e8, fontFamily: 'MaterialIcons');
+
 /// Data describing an inline note marker to be rendered next to a word.
 class NoteMarker {
   final String id;
   final int wordId;
-  final String marker;
+  final String? marker;
+  final IconData? icon;
 
   const NoteMarker({
     required this.id,
     required this.wordId,
-    this.marker = '✎',
+    this.marker,
+    this.icon = defaultNoteIcon,
   });
 }
 
 /// A render widget that displays an inline superscript marker for notes.
 class NoteMarkerWidget extends LeafRenderObjectWidget {
   final String id;
-  final String marker;
+  final String? marker;
+  final IconData? icon;
   final TextStyle style;
   final NoteTapCallback? onTap;
 
   const NoteMarkerWidget({
     super.key,
     required this.id,
-    this.marker = '✎',
+    this.marker,
+    this.icon = defaultNoteIcon,
     this.style = const TextStyle(color: Color(0xFF2196F3), fontSize: 11),
     this.onTap,
   });
@@ -37,6 +45,7 @@ class NoteMarkerWidget extends LeafRenderObjectWidget {
     return RenderNoteMarker(
       id: id,
       marker: marker,
+      icon: icon,
       style: style,
       onTap: onTap,
     );
@@ -47,6 +56,7 @@ class NoteMarkerWidget extends LeafRenderObjectWidget {
     renderObject
       ..id = id
       ..marker = marker
+      ..icon = icon
       ..style = style
       ..onTap = onTap;
   }
@@ -55,17 +65,16 @@ class NoteMarkerWidget extends LeafRenderObjectWidget {
 class RenderNoteMarker extends RenderBox {
   RenderNoteMarker({
     required String id,
-    required String marker,
+    String? marker,
+    IconData? icon,
     required TextStyle style,
     NoteTapCallback? onTap,
   })  : _id = id,
         _marker = marker,
+        _icon = icon,
         _style = style,
         _onTap = onTap {
-    _textPainter = TextPainter(
-      text: TextSpan(text: _marker, style: _style),
-      textDirection: TextDirection.ltr,
-    );
+    _updateTextPainter();
 
     _tapRecognizer = TapGestureRecognizer()
       ..onTap = () {
@@ -75,7 +84,7 @@ class RenderNoteMarker extends RenderBox {
       };
   }
 
-  late final TextPainter _textPainter;
+  late final TextPainter _textPainter = TextPainter(textDirection: TextDirection.ltr);
   late final TapGestureRecognizer _tapRecognizer;
 
   String _id;
@@ -85,12 +94,21 @@ class RenderNoteMarker extends RenderBox {
     _id = value;
   }
 
-  String _marker;
-  String get marker => _marker;
-  set marker(String value) {
+  String? _marker;
+  String? get marker => _marker;
+  set marker(String? value) {
     if (_marker == value) return;
     _marker = value;
-    _textPainter.text = TextSpan(text: _marker, style: _style);
+    _updateTextPainter();
+    markNeedsLayout();
+  }
+
+  IconData? _icon;
+  IconData? get icon => _icon;
+  set icon(IconData? value) {
+    if (_icon == value) return;
+    _icon = value;
+    _updateTextPainter();
     markNeedsLayout();
   }
 
@@ -99,8 +117,27 @@ class RenderNoteMarker extends RenderBox {
   set style(TextStyle value) {
     if (_style == value) return;
     _style = value;
-    _textPainter.text = TextSpan(text: _marker, style: _style);
+    _updateTextPainter();
     markNeedsLayout();
+  }
+
+  void _updateTextPainter() {
+    final String text;
+    final TextStyle effectiveStyle;
+
+    if (_icon != null) {
+      text = String.fromCharCode(_icon!.codePoint);
+      effectiveStyle = _style.copyWith(
+        fontFamily: _icon!.fontFamily,
+        package: _icon!.fontPackage,
+        fontFamilyFallback: _icon!.fontFamilyFallback,
+      );
+    } else {
+      text = _marker ?? '✎';
+      effectiveStyle = _style;
+    }
+
+    _textPainter.text = TextSpan(text: text, style: effectiveStyle);
   }
 
   NoteTapCallback? _onTap;

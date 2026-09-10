@@ -292,6 +292,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             NoteMarkerWidget(
               id: note.id,
               marker: note.marker,
+              icon: note.icon,
               style: noteMarkerStyle,
               onTap: widget.onNoteTapped,
             ),
@@ -322,6 +323,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             NoteMarkerWidget(
               id: note.id,
               marker: note.marker,
+              icon: note.icon,
               style: noteMarkerStyle,
               onTap: widget.onNoteTapped,
             ),
@@ -339,6 +341,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             NoteMarkerWidget(
               id: note.id,
               marker: note.marker,
+              icon: note.icon,
               style: noteMarkerStyle,
               onTap: widget.onNoteTapped,
             ),

@@ -1,3 +1,7 @@
+## 0.9.0 - 2026-09-08
+
+- Support selecting the note icon.
+
 ## 0.8.0 - 2026-09-08
 
 - Add selection handles to selection.
