@@ -127,12 +127,12 @@ class RenderPassage extends RenderBox
           offsetInChild.dy < child.size.height;
 
       if (inBounds) {
-        if (child is RenderParagraph) {
+        if (child is RenderParagraph && child.selectable) {
           // Recursively check inside the paragraph
           final id = child.getWordAtOffset(offsetInChild);
-          if (id != null) return id;
+          if (id != null && id >= 0) return id;
         }
-        // If we hit something else (like spacing), return null.
+        // If we hit something else (like spacing or unselectable paragraph), return null.
         return null;
       }
 
@@ -144,10 +144,11 @@ class RenderPassage extends RenderBox
   /// Returns the geometry (bounding box and text direction) of the word with [wordId]
   /// in passage coordinates.
   WordGeometry? getWordGeometry(int wordId) {
+    if (wordId < 0) return null;
     RenderBox? child = firstChild;
     while (child != null) {
       final parentData = child.parentData as PassageParentData;
-      if (child is RenderParagraph) {
+      if (child is RenderParagraph && child.selectable) {
         final geom = child.getWordGeometry(wordId);
         if (geom != null) {
           return WordGeometry(

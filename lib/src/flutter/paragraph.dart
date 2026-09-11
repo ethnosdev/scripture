@@ -236,6 +236,7 @@ class RenderParagraph extends RenderBox
     double bestScore = double.infinity;
 
     void checkWord(int id, Rect wordRect) {
+      if (id < 0) return;
       double dyDist = 0;
       if (offsetInParagraph.dy < wordRect.top) {
         dyDist = wordRect.top - offsetInParagraph.dy;

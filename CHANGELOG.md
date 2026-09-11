@@ -1,3 +1,7 @@
+## 0.11.0 - 2026-09-11
+
+- Fix verse highlighting issues.
+
 ## 0.10.0 - 2026-09-11
 
 - Fix space after footnote before punctuation.

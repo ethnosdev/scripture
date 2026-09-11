@@ -10,45 +10,39 @@ class ScriptureLogic {
     List<UsfmLine> lines,
     int wordId,
   ) {
+    if (wordId < 0) return;
     final targetVerseRef = wordId ~/ 1000;
     int? startId;
     int? endId;
 
-    // Logic extracted from your original _handleWordLongPress
-    // Simplified slightly for readability, but identical logic.
     int currentVerseNum = -1;
     int currentWordOffset = 0;
 
     for (final line in lines) {
-      if (line.format == ParagraphFormat.b ||
-          line.format == ParagraphFormat.r) {
+      if (!line.format.isBiblicalText ||
+          line.format == ParagraphFormat.b) {
         continue;
       }
 
-      bool isBiblicalText = line.format.isBiblicalText;
-
-      if (isBiblicalText) {
-        if (line.verse != currentVerseNum) {
-          currentVerseNum = line.verse;
-          currentWordOffset = 0;
-        }
+      if (line.verse != currentVerseNum) {
+        currentVerseNum = line.verse;
+        currentWordOffset = 0;
       }
+
+      final words = _countWordsInLine(line, currentWordOffset);
 
       // Check for match
       if (line.bookChapterVerse == targetVerseRef) {
-        // We rely on UsfmParser's counting logic implicitly here,
-        // or we can reuse the parser's counting method to be safe.
-        // For performance, we do a lightweight count here:
-        final words = _countWordsInLine(line, currentWordOffset);
         for (final w in words) {
-          startId ??= w.id;
-          endId = w.id;
+          if (w.id >= 0) {
+            startId ??= w.id;
+            endId = w.id;
+          }
         }
       }
 
       // Increment offset
-      final wordCount = _countWordsInLine(line, 0).length;
-      currentWordOffset += wordCount;
+      currentWordOffset += words.length;
     }
 
     if (startId != null && endId != null) {

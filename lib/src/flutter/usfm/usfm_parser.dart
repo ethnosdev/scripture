@@ -11,6 +11,7 @@ class UsfmParser {
   }) {
     UsfmPassage passage = UsfmPassage([]);
     int currentVerseNum = -1;
+    int lastEmittedVerseNum = -1;
     int currentWordOffset = 0;
 
     for (final line in verseLines) {
@@ -29,9 +30,12 @@ class UsfmParser {
         case ParagraphFormat.mi:
         case ParagraphFormat.pmo:
           if (line.verse != currentVerseNum) {
-            passage.append([VerseNumber(line.verse.toString())], line.format);
             currentVerseNum = line.verse;
             currentWordOffset = 0;
+          }
+          if (line.verse > 0 && line.verse != lastEmittedVerseNum) {
+            passage.append([VerseNumber(line.verse.toString())], line.format);
+            lastEmittedVerseNum = line.verse;
           }
           final words = getWords(line, currentWordOffset);
           currentWordOffset += words.whereType<Word>().length;
@@ -43,15 +47,22 @@ class UsfmParser {
         case ParagraphFormat.qr:
         case ParagraphFormat.pc:
           if (line.verse != currentVerseNum) {
-            passage.append([VerseNumber(line.verse.toString())], line.format);
             currentVerseNum = line.verse;
             currentWordOffset = 0;
+          }
+          if (line.verse > 0 && line.verse != lastEmittedVerseNum) {
+            passage.append([VerseNumber(line.verse.toString())], line.format);
+            lastEmittedVerseNum = line.verse;
           }
           final words = getWords(line, currentWordOffset);
           currentWordOffset += words.whereType<Word>().length;
           passage.append(words, line.format);
           passage.commit();
         case ParagraphFormat.d:
+          if (line.verse != currentVerseNum) {
+            currentVerseNum = line.verse;
+            currentWordOffset = 0;
+          }
           final words = getWords(line, currentWordOffset);
           currentWordOffset += words.whereType<Word>().length;
           passage.commit(words, line.format);
@@ -67,8 +78,7 @@ class UsfmParser {
             passage.commit();
             continue;
           }
-          final words = getWords(line, currentWordOffset);
-          currentWordOffset += words.whereType<Word>().length;
+          final words = getWords(line, 0);
           passage.commit(words, line.format);
       }
     }
@@ -80,7 +90,8 @@ class UsfmParser {
     final text = line.text;
     final id = line.bookChapterVerse;
     final list = <ParagraphElement>[];
-    int wordId = (id * 1000) + startOffset;
+    final bool isBiblicalVerse = line.format.isBiblicalText && line.verse > 0;
+    int wordId = isBiblicalVerse ? (id * 1000) + startOffset : -1;
 
     final tokenizer = RegExp(r'(\\f.+?\\f\*)|(\s+)|([^\s\\]+)');
     final matches = tokenizer.allMatches(text);
@@ -91,8 +102,7 @@ class UsfmParser {
         final cleanText = _extractUsfmFootnoteText(fullMatch);
         if (cleanText.isNotEmpty) list.add(Footnote(cleanText));
       } else if (match.group(3) != null) {
-        list.add(Word(text: fullMatch, id: wordId));
-        wordId++;
+        list.add(Word(text: fullMatch, id: isBiblicalVerse ? wordId++ : -1));
       }
     }
     return list;

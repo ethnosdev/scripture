@@ -140,8 +140,8 @@ class _SelectableScriptureState extends State<SelectableScripture> {
     final localOffset = renderObject.globalToLocal(details.globalPosition);
     final hitWordId = renderObject.getWordAtOffset(localOffset);
 
-    if (hitWordId == null) {
-      // Tapped on whitespace -> Clear selection
+    if (hitWordId == null || hitWordId < 0) {
+      // Tapped on whitespace or unselectable element -> Clear selection
       if (widget.controller.hasSelection) {
         widget.controller.clear();
       }
@@ -165,7 +165,7 @@ class _SelectableScriptureState extends State<SelectableScripture> {
     final localOffset = renderObject.globalToLocal(details.globalPosition);
     final hitWordId = renderObject.getWordAtOffset(localOffset);
 
-    if (hitWordId != null) {
+    if (hitWordId != null && hitWordId >= 0) {
       widget.onSelectionRequested?.call(hitWordId);
     }
   }
@@ -224,7 +224,7 @@ class _SelectableScriptureState extends State<SelectableScripture> {
 
     final hitWordId = renderObject.getWordAtOrNearOffset(effectiveOffset);
 
-    if (hitWordId != null) {
+    if (hitWordId != null && hitWordId >= 0) {
       if (_dragMode == _DragMode.start) {
         widget.controller.selectRange(hitWordId, _fixedAnchor!);
       } else {
