@@ -1,3 +1,7 @@
+## 0.10.0 - 2026-09-11
+
+- Fix space after footnote before punctuation.
+
 ## 0.9.0 - 2026-09-08
 
 - Support selecting the note icon.

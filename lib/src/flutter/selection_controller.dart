@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../core/punctuation.dart';
 
 /// Manages the state of word selection within a scripture passage.
 ///
@@ -79,7 +80,7 @@ class ScriptureSelectionController extends ChangeNotifier {
     for (int i = _startId!; i <= _endId!; i++) {
       final text = _wordTextMap[i];
       if (text != null) {
-        if (buffer.isNotEmpty) {
+        if (buffer.isNotEmpty && !isPunctuation(text)) {
           buffer.write(' ');
         }
         buffer.write(text);

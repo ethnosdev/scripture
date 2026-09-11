@@ -89,5 +89,23 @@ void main() {
         ),
       );
     });
+
+    test('isPunctuation regex matches various punctuation strings', () {
+      final punctRegex = RegExp(r'^[\p{P}\p{S}]+$', unicode: true);
+      expect(punctRegex.hasMatch('?”'), isTrue);
+      expect(punctRegex.hasMatch('”'), isTrue);
+      expect(punctRegex.hasMatch('?'), isTrue);
+      expect(punctRegex.hasMatch('—'), isTrue);
+      expect(punctRegex.hasMatch(','), isTrue);
+      expect(punctRegex.hasMatch('.'), isTrue);
+      expect(punctRegex.hasMatch('),'), isTrue);
+      expect(punctRegex.hasMatch(').'), isTrue);
+      expect(punctRegex.hasMatch('’'), isTrue);
+      expect(punctRegex.hasMatch('[’’]'), isTrue);
+      expect(punctRegex.hasMatch('word'), isFalse);
+      expect(punctRegex.hasMatch('saying,'), isFalse);
+      expect(punctRegex.hasMatch(''), isFalse);
+      expect(punctRegex.hasMatch(' '), isFalse);
+    });
   });
 }

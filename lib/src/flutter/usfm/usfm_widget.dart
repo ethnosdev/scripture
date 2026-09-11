@@ -98,6 +98,13 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             final next = elements[i + 1];
             if (next is Footnote) {
               _wordFootnoteMap[current.id] = next.text;
+              int j = i + 2;
+              while (j < elements.length &&
+                  elements[j] is Word &&
+                  isPunctuation((elements[j] as Word).text)) {
+                _wordFootnoteMap[(elements[j] as Word).id] = next.text;
+                j++;
+              }
             }
           }
         }
@@ -284,6 +291,16 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             ),
           );
           i++;
+
+          while (i + 2 < elements.length &&
+              elements[i + 2] is Word &&
+              isPunctuation((elements[i + 2] as Word).text)) {
+            final punct = elements[i + 2] as Word;
+            atomChildren.add(
+              WordWidget(text: punct.text, id: punct.id, style: style),
+            );
+            i++;
+          }
         }
 
         if (noteMap.containsKey(next.id)) {
@@ -317,6 +334,18 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             onTap: widget.onFootnoteTapped,
           ),
         ];
+        i++;
+
+        while (i + 1 < elements.length &&
+            elements[i + 1] is Word &&
+            isPunctuation((elements[i + 1] as Word).text)) {
+          final punct = elements[i + 1] as Word;
+          atomChildren.add(
+            WordWidget(text: punct.text, id: punct.id, style: style),
+          );
+          i++;
+        }
+
         if (noteMap.containsKey(current.id)) {
           final note = noteMap[current.id]!;
           atomChildren.add(
@@ -330,7 +359,6 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           );
         }
         atom = TextAtomWidget(children: atomChildren);
-        i++;
       } else if (current is Word) {
         final atomChildren = <Widget>[
           WordWidget(text: current.text, id: current.id, style: style),
@@ -352,16 +380,24 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         final footnoteStyle =
             widget.footnoteMarkerStyle ??
             style.copyWith(color: Theme.of(context).colorScheme.primary);
-        atom = TextAtomWidget(
-          children: [
-            FootnoteWidget(
-              marker: '*',
-              text: current.text,
-              style: footnoteStyle,
-              onTap: widget.onFootnoteTapped,
-            ),
-          ],
-        );
+        final atomChildren = <Widget>[
+          FootnoteWidget(
+            marker: '*',
+            text: current.text,
+            style: footnoteStyle,
+            onTap: widget.onFootnoteTapped,
+          ),
+        ];
+        while (i + 1 < elements.length &&
+            elements[i + 1] is Word &&
+            isPunctuation((elements[i + 1] as Word).text)) {
+          final punct = elements[i + 1] as Word;
+          atomChildren.add(
+            WordWidget(text: punct.text, id: punct.id, style: style),
+          );
+          i++;
+        }
+        atom = TextAtomWidget(children: atomChildren);
       } else if (current is VerseNumber) {
         if (widget.showVerseNumbers) {
           atom = TextAtomWidget(
@@ -377,7 +413,10 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         // Spacing logic
         if (i + 1 < elements.length) {
           final next = elements[i + 1];
-          if (next is! Footnote) widgets.add(SpaceWidget(width: spaceWidth));
+          final isPunct = next is Word && isPunctuation(next.text);
+          if (next is! Footnote && !isPunct) {
+            widgets.add(SpaceWidget(width: spaceWidth));
+          }
         }
       }
     }
