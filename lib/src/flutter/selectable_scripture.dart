@@ -13,6 +13,7 @@ class SelectableScripture extends StatefulWidget {
   final ScriptureSelectionController controller;
   final void Function(int wordId)? onWordTapped;
   final void Function(int wordId)? onSelectionRequested;
+  final VoidCallback? onTapWhitespace;
   final Color? handleColor;
   final bool showHandles;
 
@@ -22,6 +23,7 @@ class SelectableScripture extends StatefulWidget {
     required this.controller,
     this.onWordTapped,
     this.onSelectionRequested,
+    this.onTapWhitespace,
     this.handleColor,
     this.showHandles = true,
   });
@@ -141,9 +143,11 @@ class _SelectableScriptureState extends State<SelectableScripture> {
     final hitWordId = renderObject.getWordAtOffset(localOffset);
 
     if (hitWordId == null || hitWordId < 0) {
-      // Tapped on whitespace or unselectable element -> Clear selection
+      // Tapped on whitespace or unselectable element -> Clear selection or trigger onTapWhitespace
       if (widget.controller.hasSelection) {
         widget.controller.clear();
+      } else {
+        widget.onTapWhitespace?.call();
       }
       return;
     }

@@ -8,6 +8,8 @@ void main() {
     TextDirection direction = TextDirection.ltr,
     Color? handleColor,
     bool showHandles = true,
+    VoidCallback? onTapWhitespace,
+    void Function(int wordId)? onWordTapped,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -20,6 +22,8 @@ void main() {
               controller: controller,
               handleColor: handleColor,
               showHandles: showHandles,
+              onTapWhitespace: onTapWhitespace,
+              onWordTapped: onWordTapped,
               child: PassageWidget(
                 children: [
                   ParagraphWidget(
@@ -234,5 +238,50 @@ void main() {
       expect(geom1.rect.left, greaterThan(geom2.rect.left));
       expect(geom1.direction, equals(TextDirection.rtl));
     });
+
+    testWidgets(
+      'tapping whitespace calls onTapWhitespace, while tapping word calls onWordTapped',
+      (tester) async {
+        final controller = ScriptureSelectionController();
+        var whitespaceTapped = false;
+        int? tappedWordId;
+
+        await tester.pumpWidget(
+          buildTestPassage(
+            controller: controller,
+            onTapWhitespace: () => whitespaceTapped = true,
+            onWordTapped: (id) => tappedWordId = id,
+          ),
+        );
+
+        // Tap on a word
+        final passageFinder = find.byType(PassageWidget);
+        final renderPassage =
+            tester.renderObject(passageFinder) as RenderPassage;
+        final geom = renderPassage.getWordGeometry(1)!;
+        final wordCenter = renderPassage.localToGlobal(geom.rect.center);
+
+        await tester.tapAt(wordCenter);
+        await tester.pump();
+        expect(tappedWordId, equals(1));
+        expect(whitespaceTapped, isFalse);
+
+        // Tap on empty space (e.g. at bottom of passage)
+        await tester.tapAt(const Offset(350, 150));
+        await tester.pump();
+        expect(whitespaceTapped, isTrue);
+
+        // When selection is active, tapping whitespace clears selection without calling onTapWhitespace
+        whitespaceTapped = false;
+        controller.selectRange(1, 3);
+        await tester.pump();
+        expect(controller.hasSelection, isTrue);
+
+        await tester.tapAt(const Offset(350, 150));
+        await tester.pump();
+        expect(controller.hasSelection, isFalse);
+        expect(whitespaceTapped, isFalse);
+      },
+    );
   });
 }

@@ -1,3 +1,8 @@
+## 0.12.0 - 2026-09-14
+
+- Make whitespace tapable.
+- Support tapping the word before a footnote marker in section headers.
+
 ## 0.11.0 - 2026-09-11
 
 - Fix verse highlighting issues.

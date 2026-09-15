@@ -28,6 +28,7 @@ class UsfmWidget extends StatefulWidget {
   final NoteTapCallback? onNoteTapped;
   final AmbiguousTapCallback? onAmbiguousTapped;
   final TextStyle? noteMarkerStyle;
+  final VoidCallback? onTapWhitespace;
 
   const UsfmWidget({
     super.key,
@@ -38,6 +39,7 @@ class UsfmWidget extends StatefulWidget {
     this.footnoteMarkerStyle,
     this.onWordTapped,
     this.onSelectionRequested,
+    this.onTapWhitespace,
     this.showHeadings = true,
     this.showVerseNumbers = true,
     this.selectionColor,
@@ -122,6 +124,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
       controller: widget.selectionController,
       handleColor: widget.selectionHandleColor,
       showHandles: widget.showSelectionHandles,
+      onTapWhitespace: widget.onTapWhitespace,
       onWordTapped: (int wordId) {
         final hasFootnote = _wordFootnoteMap.containsKey(wordId);
         final hasNote = wordNoteMap.containsKey(wordId);
@@ -253,6 +256,37 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           fontSize: (style.fontSize ?? 14.0) * 0.75,
         );
 
+    VoidCallback? getWordTapCallback({
+      required int wordId,
+      String? footnoteText,
+      String? noteId,
+    }) {
+      if (footnoteText == null && noteId == null) {
+        return null;
+      }
+      return () {
+        if (widget.selectionController.hasSelection) {
+          widget.selectionController.clear();
+          return;
+        }
+        if (footnoteText != null && noteId != null) {
+          if (widget.onAmbiguousTapped != null) {
+            widget.onAmbiguousTapped!(
+              wordId: wordId,
+              footnoteText: footnoteText,
+              noteId: noteId,
+            );
+          } else {
+            widget.onFootnoteTapped?.call(footnoteText);
+          }
+        } else if (footnoteText != null) {
+          widget.onFootnoteTapped?.call(footnoteText);
+        } else if (noteId != null) {
+          widget.onNoteTapped?.call(noteId);
+        }
+      };
+    }
+
     for (int i = 0; i < elements.length; i++) {
       final current = elements[i];
       Widget? atom;
@@ -262,6 +296,16 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           i + 1 < elements.length &&
           elements[i + 1] is Word) {
         final next = elements[i + 1] as Word;
+        final hasFootnote =
+            i + 2 < elements.length && elements[i + 2] is Footnote;
+        final footnote = hasFootnote ? elements[i + 2] as Footnote : null;
+        final footnoteText = footnote?.text;
+        final noteId = noteMap[next.id]?.id;
+        final tapCallback = getWordTapCallback(
+          wordId: next.id,
+          footnoteText: footnoteText,
+          noteId: noteId,
+        );
 
         final atomChildren = <Widget>[];
         if (widget.showVerseNumbers) {
@@ -274,11 +318,15 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           );
         }
         atomChildren.add(
-          WordWidget(text: next.text, id: next.id, style: style),
+          WordWidget(
+            text: next.text,
+            id: next.id,
+            style: style,
+            onTap: tapCallback,
+          ),
         );
 
-        if (i + 2 < elements.length && elements[i + 2] is Footnote) {
-          final footnote = elements[i + 2] as Footnote;
+        if (footnote != null) {
           final footnoteStyle =
               widget.footnoteMarkerStyle ??
               style.copyWith(color: Theme.of(context).colorScheme.primary);
@@ -297,13 +345,18 @@ class _UsfmWidgetState extends State<UsfmWidget> {
               isPunctuation((elements[i + 2] as Word).text)) {
             final punct = elements[i + 2] as Word;
             atomChildren.add(
-              WordWidget(text: punct.text, id: punct.id, style: style),
+              WordWidget(
+                text: punct.text,
+                id: punct.id,
+                style: style,
+                onTap: tapCallback,
+              ),
             );
             i++;
           }
         }
 
-        if (noteMap.containsKey(next.id)) {
+        if (noteId != null) {
           final note = noteMap[next.id]!;
           atomChildren.add(
             NoteMarkerWidget(
@@ -325,8 +378,19 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         final footnoteStyle =
             widget.footnoteMarkerStyle ??
             style.copyWith(color: Theme.of(context).colorScheme.primary);
+        final noteId = noteMap[current.id]?.id;
+        final tapCallback = getWordTapCallback(
+          wordId: current.id,
+          footnoteText: next.text,
+          noteId: noteId,
+        );
         final atomChildren = <Widget>[
-          WordWidget(text: current.text, id: current.id, style: style),
+          WordWidget(
+            text: current.text,
+            id: current.id,
+            style: style,
+            onTap: tapCallback,
+          ),
           FootnoteWidget(
             marker: '*',
             text: next.text,
@@ -341,12 +405,17 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             isPunctuation((elements[i + 1] as Word).text)) {
           final punct = elements[i + 1] as Word;
           atomChildren.add(
-            WordWidget(text: punct.text, id: punct.id, style: style),
+            WordWidget(
+              text: punct.text,
+              id: punct.id,
+              style: style,
+              onTap: tapCallback,
+            ),
           );
           i++;
         }
 
-        if (noteMap.containsKey(current.id)) {
+        if (noteId != null) {
           final note = noteMap[current.id]!;
           atomChildren.add(
             NoteMarkerWidget(
@@ -360,10 +429,21 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         }
         atom = TextAtomWidget(children: atomChildren);
       } else if (current is Word) {
+        final noteId = noteMap[current.id]?.id;
+        final tapCallback = getWordTapCallback(
+          wordId: current.id,
+          footnoteText: null,
+          noteId: noteId,
+        );
         final atomChildren = <Widget>[
-          WordWidget(text: current.text, id: current.id, style: style),
+          WordWidget(
+            text: current.text,
+            id: current.id,
+            style: style,
+            onTap: tapCallback,
+          ),
         ];
-        if (noteMap.containsKey(current.id)) {
+        if (noteId != null) {
           final note = noteMap[current.id]!;
           atomChildren.add(
             NoteMarkerWidget(
@@ -380,6 +460,11 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         final footnoteStyle =
             widget.footnoteMarkerStyle ??
             style.copyWith(color: Theme.of(context).colorScheme.primary);
+        final tapCallback = getWordTapCallback(
+          wordId: -1,
+          footnoteText: current.text,
+          noteId: null,
+        );
         final atomChildren = <Widget>[
           FootnoteWidget(
             marker: '*',
@@ -393,7 +478,12 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             isPunctuation((elements[i + 1] as Word).text)) {
           final punct = elements[i + 1] as Word;
           atomChildren.add(
-            WordWidget(text: punct.text, id: punct.id, style: style),
+            WordWidget(
+              text: punct.text,
+              id: punct.id,
+              style: style,
+              onTap: tapCallback,
+            ),
           );
           i++;
         }
