@@ -4,6 +4,7 @@ import 'package:scripture/scripture_core.dart'; // for ParagraphFormat
 class UsfmParagraphStyle {
   final TextStyle textStyle;
   final TextStyle verseNumberStyle;
+  final TextStyle? wordsOfJesusStyle;
   final TextAlign textAlign;
   final double firstLineIndent;
   final double subsequentLinesIndent;
@@ -12,6 +13,7 @@ class UsfmParagraphStyle {
   const UsfmParagraphStyle({
     required this.textStyle,
     TextStyle? verseNumberStyle,
+    this.wordsOfJesusStyle,
     this.textAlign = TextAlign.start,
     this.firstLineIndent = 0.0,
     this.subsequentLinesIndent = 0.0,
@@ -24,6 +26,7 @@ class UsfmParagraphStyle {
   factory UsfmParagraphStyle.usfmDefaults({
     required ParagraphFormat format,
     required TextStyle baseStyle,
+    TextStyle? wordsOfJesusStyle,
   }) {
     // 1. Derive Font Styles
     TextStyle style = baseStyle;
@@ -130,6 +133,7 @@ class UsfmParagraphStyle {
     return UsfmParagraphStyle(
       textStyle: style,
       verseNumberStyle: verseStyle,
+      wordsOfJesusStyle: wordsOfJesusStyle,
       textAlign: align,
       firstLineIndent: indent1,
       subsequentLinesIndent: indent2,
@@ -140,6 +144,7 @@ class UsfmParagraphStyle {
   UsfmParagraphStyle copyWith({
     TextStyle? textStyle,
     TextStyle? verseNumberStyle,
+    TextStyle? wordsOfJesusStyle,
     TextAlign? textAlign,
     double? firstLineIndent,
     double? subsequentLinesIndent,
@@ -148,6 +153,7 @@ class UsfmParagraphStyle {
     return UsfmParagraphStyle(
       textStyle: textStyle ?? this.textStyle,
       verseNumberStyle: verseNumberStyle ?? this.verseNumberStyle,
+      wordsOfJesusStyle: wordsOfJesusStyle ?? this.wordsOfJesusStyle,
       textAlign: textAlign ?? this.textAlign,
       firstLineIndent: firstLineIndent ?? this.firstLineIndent,
       subsequentLinesIndent:

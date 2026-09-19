@@ -1,3 +1,7 @@
+## 0.13.0 - 2026-09-19
+
+- Support words of Jesus styling.
+
 ## 0.12.0 - 2026-09-14
 
 - Make whitespace tapable.

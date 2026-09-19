@@ -5,7 +5,13 @@ class ParagraphElement {}
 class Word extends ParagraphElement {
   final String text;
   final int id;
-  Word({required this.text, required this.id});
+  final bool isWordsOfJesus;
+
+  Word({
+    required this.text,
+    required this.id,
+    this.isWordsOfJesus = false,
+  });
 }
 
 class VerseNumber extends ParagraphElement {

@@ -93,16 +93,30 @@ class UsfmParser {
     final bool isBiblicalVerse = line.format.isBiblicalText && line.verse > 0;
     int wordId = isBiblicalVerse ? (id * 1000) + startOffset : -1;
 
-    final tokenizer = RegExp(r'(\\f.+?\\f\*)|(\s+)|([^\s\\]+)');
+    final tokenizer = RegExp(
+      r'(\\f.+?\\f\*)|(\\wj\*)|(\\wj(?![*a-zA-Z]))|(\s+)|([^\s\\]+)',
+    );
     final matches = tokenizer.allMatches(text);
+
+    bool inWj = false;
 
     for (final match in matches) {
       final fullMatch = match.group(0)!;
       if (match.group(1) != null) {
         final cleanText = _extractUsfmFootnoteText(fullMatch);
         if (cleanText.isNotEmpty) list.add(Footnote(cleanText));
+      } else if (match.group(2) != null) {
+        inWj = false;
       } else if (match.group(3) != null) {
-        list.add(Word(text: fullMatch, id: isBiblicalVerse ? wordId++ : -1));
+        inWj = true;
+      } else if (match.group(5) != null) {
+        list.add(
+          Word(
+            text: fullMatch,
+            id: isBiblicalVerse ? wordId++ : -1,
+            isWordsOfJesus: inWj,
+          ),
+        );
       }
     }
     return list;

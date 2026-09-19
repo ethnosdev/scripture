@@ -246,7 +246,10 @@ class _UsfmWidgetState extends State<UsfmWidget> {
 
     // Use styles from the object
     final style = pStyle.textStyle;
+    final wjStyle = pStyle.wordsOfJesusStyle;
     final verseStyle = pStyle.verseNumberStyle;
+    TextStyle wordStyle(Word word) =>
+        (word.isWordsOfJesus && wjStyle != null) ? wjStyle : style;
     final double spaceWidth = (style.fontSize ?? 14.0) * 0.28;
     final noteMap = {for (final m in widget.noteMarkers) m.wordId: m};
     final noteMarkerStyle = widget.noteMarkerStyle ??
@@ -321,7 +324,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           WordWidget(
             text: next.text,
             id: next.id,
-            style: style,
+            style: wordStyle(next),
             onTap: tapCallback,
           ),
         );
@@ -348,7 +351,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
               WordWidget(
                 text: punct.text,
                 id: punct.id,
-                style: style,
+                style: wordStyle(punct),
                 onTap: tapCallback,
               ),
             );
@@ -388,7 +391,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           WordWidget(
             text: current.text,
             id: current.id,
-            style: style,
+            style: wordStyle(current),
             onTap: tapCallback,
           ),
           FootnoteWidget(
@@ -408,7 +411,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             WordWidget(
               text: punct.text,
               id: punct.id,
-              style: style,
+              style: wordStyle(punct),
               onTap: tapCallback,
             ),
           );
@@ -439,7 +442,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
           WordWidget(
             text: current.text,
             id: current.id,
-            style: style,
+            style: wordStyle(current),
             onTap: tapCallback,
           ),
         ];
@@ -481,7 +484,7 @@ class _UsfmWidgetState extends State<UsfmWidget> {
             WordWidget(
               text: punct.text,
               id: punct.id,
-              style: style,
+              style: wordStyle(punct),
               onTap: tapCallback,
             ),
           );
