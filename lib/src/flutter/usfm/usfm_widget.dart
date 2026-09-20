@@ -249,7 +249,9 @@ class _UsfmWidgetState extends State<UsfmWidget> {
     final wjStyle = pStyle.wordsOfJesusStyle;
     final verseStyle = pStyle.verseNumberStyle;
     TextStyle wordStyle(Word word) =>
-        (word.isWordsOfJesus && wjStyle != null) ? wjStyle : style;
+        (paragraph.wordsOfJesusIds.contains(word.id) && wjStyle != null)
+            ? wjStyle
+            : style;
     final double spaceWidth = (style.fontSize ?? 14.0) * 0.28;
     final noteMap = {for (final m in widget.noteMarkers) m.wordId: m};
     final noteMarkerStyle = widget.noteMarkerStyle ??

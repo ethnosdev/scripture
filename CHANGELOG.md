@@ -1,3 +1,7 @@
+## 0.14.0 - 2026-09-19
+
+- Refactor words of Jesus implementation (USFM widgets only).
+
 ## 0.13.0 - 2026-09-19
 
 - Support words of Jesus styling.

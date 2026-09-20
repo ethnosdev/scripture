@@ -5,13 +5,7 @@ class ParagraphElement {}
 class Word extends ParagraphElement {
   final String text;
   final int id;
-  final bool isWordsOfJesus;
-
-  Word({
-    required this.text,
-    required this.id,
-    this.isWordsOfJesus = false,
-  });
+  Word({required this.text, required this.id});
 }
 
 class VerseNumber extends ParagraphElement {
@@ -29,7 +23,13 @@ class PassageElement {}
 class UsfmParagraph extends PassageElement {
   final List<ParagraphElement> content;
   final ParagraphFormat format;
-  UsfmParagraph({required this.content, required this.format});
+  final Set<int> wordsOfJesusIds;
+
+  UsfmParagraph({
+    required this.content,
+    required this.format,
+    Set<int>? wordsOfJesusIds,
+  }) : wordsOfJesusIds = wordsOfJesusIds ?? <int>{};
 }
 
 // class Passage {
@@ -41,27 +41,49 @@ class UsfmPassage {
   final List<UsfmParagraph> paragraphs;
   UsfmPassage(this.paragraphs);
 
+  Set<int> get wordsOfJesusIds => {
+        for (final p in paragraphs) ...p.wordsOfJesusIds,
+      };
+
   bool _isAppending = false;
 
-  void append(List<ParagraphElement> elements, ParagraphFormat format) {
+  void append(
+    List<ParagraphElement> elements,
+    ParagraphFormat format, {
+    Set<int>? wordsOfJesusIds,
+  }) {
     if (!_isAppending ||
         paragraphs.isEmpty ||
         paragraphs.last.format != format) {
-      paragraphs.add(UsfmParagraph(content: elements, format: format));
+      paragraphs.add(
+        UsfmParagraph(
+          content: elements,
+          format: format,
+          wordsOfJesusIds:
+              wordsOfJesusIds != null ? Set.of(wordsOfJesusIds) : null,
+        ),
+      );
     } else {
       paragraphs.last.content.addAll(elements);
+      if (wordsOfJesusIds != null) {
+        paragraphs.last.wordsOfJesusIds.addAll(wordsOfJesusIds);
+      }
     }
     _isAppending = true;
   }
 
-  void commit([List<ParagraphElement>? elements, ParagraphFormat? format]) {
+  void commit([
+    List<ParagraphElement>? elements,
+    ParagraphFormat? format,
+    Set<int>? wordsOfJesusIds,
+  ]) {
     assert(
       (elements != null && format != null) ||
           (elements == null && format == null),
     );
     _isAppending = false;
     if (elements != null && format != null) {
-      append(elements, format);
+      append(elements, format, wordsOfJesusIds: wordsOfJesusIds);
     }
   }
 }

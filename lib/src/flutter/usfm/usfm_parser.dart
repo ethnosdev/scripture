@@ -37,9 +37,11 @@ class UsfmParser {
             passage.append([VerseNumber(line.verse.toString())], line.format);
             lastEmittedVerseNum = line.verse;
           }
-          final words = getWords(line, currentWordOffset);
+          final wjIds = <int>{};
+          final words =
+              getWords(line, currentWordOffset, wordsOfJesusIds: wjIds);
           currentWordOffset += words.whereType<Word>().length;
-          passage.append(words, line.format);
+          passage.append(words, line.format, wordsOfJesusIds: wjIds);
         case ParagraphFormat.q1:
         case ParagraphFormat.q2:
         case ParagraphFormat.li1:
@@ -54,18 +56,22 @@ class UsfmParser {
             passage.append([VerseNumber(line.verse.toString())], line.format);
             lastEmittedVerseNum = line.verse;
           }
-          final words = getWords(line, currentWordOffset);
+          final wjIds = <int>{};
+          final words =
+              getWords(line, currentWordOffset, wordsOfJesusIds: wjIds);
           currentWordOffset += words.whereType<Word>().length;
-          passage.append(words, line.format);
+          passage.append(words, line.format, wordsOfJesusIds: wjIds);
           passage.commit();
         case ParagraphFormat.d:
           if (line.verse != currentVerseNum) {
             currentVerseNum = line.verse;
             currentWordOffset = 0;
           }
-          final words = getWords(line, currentWordOffset);
+          final wjIds = <int>{};
+          final words =
+              getWords(line, currentWordOffset, wordsOfJesusIds: wjIds);
           currentWordOffset += words.whereType<Word>().length;
-          passage.commit(words, line.format);
+          passage.commit(words, line.format, wjIds);
         case ParagraphFormat.s1:
         case ParagraphFormat.s2:
         case ParagraphFormat.ms:
@@ -86,7 +92,11 @@ class UsfmParser {
     return passage;
   }
 
-  static List<ParagraphElement> getWords(UsfmLine line, int startOffset) {
+  static List<ParagraphElement> getWords(
+    UsfmLine line,
+    int startOffset, {
+    Set<int>? wordsOfJesusIds,
+  }) {
     final text = line.text;
     final id = line.bookChapterVerse;
     final list = <ParagraphElement>[];
@@ -110,13 +120,11 @@ class UsfmParser {
       } else if (match.group(3) != null) {
         inWj = true;
       } else if (match.group(5) != null) {
-        list.add(
-          Word(
-            text: fullMatch,
-            id: isBiblicalVerse ? wordId++ : -1,
-            isWordsOfJesus: inWj,
-          ),
-        );
+        final currentId = isBiblicalVerse ? wordId++ : -1;
+        if (inWj && currentId != -1) {
+          wordsOfJesusIds?.add(currentId);
+        }
+        list.add(Word(text: fullMatch, id: currentId));
       }
     }
     return list;

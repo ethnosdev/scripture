@@ -5,7 +5,7 @@ import 'package:scripture/scripture_core.dart';
 
 void main() {
   group('UsfmParser Words of Jesus (wj) Tokenization', () {
-    test('Correctly sets isWordsOfJesus on words inside \\wj ... \\wj*', () {
+    test('Correctly identifies words inside \\wj ... \\wj*', () {
       final line = UsfmLine(
         bookChapterVerse: 40003015,
         text:
@@ -13,42 +13,48 @@ void main() {
         format: ParagraphFormat.p,
       );
 
-      final elements = UsfmParser.getWords(line, 0);
+      final wjIds = <int>{};
+      final elements = UsfmParser.getWords(line, 0, wordsOfJesusIds: wjIds);
       final words = elements.whereType<Word>().toList();
 
       // Words inside first wj span
       expect(words[0].text, equals('“Let'));
-      expect(words[0].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[0].id), isTrue);
       expect(words[1].text, equals('it'));
-      expect(words[1].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[1].id), isTrue);
       expect(words[2].text, equals('be'));
-      expect(words[2].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[2].id), isTrue);
       expect(words[3].text, equals('so'));
-      expect(words[3].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[3].id), isTrue);
       expect(words[4].text, equals('now,”'));
-      expect(words[4].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[4].id), isTrue);
 
       // Words between wj spans
       expect(words[5].text, equals('Jesus'));
-      expect(words[5].isWordsOfJesus, isFalse);
+      expect(wjIds.contains(words[5].id), isFalse);
       expect(words[6].text, equals('replied.'));
-      expect(words[6].isWordsOfJesus, isFalse);
+      expect(wjIds.contains(words[6].id), isFalse);
 
       // Words inside second wj span
       expect(words[7].text, equals('“It'));
-      expect(words[7].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[7].id), isTrue);
       expect(words[18].text, equals('way.”'));
-      expect(words[18].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[18].id), isTrue);
 
       // Words after second wj span
       expect(words[19].text, equals('Then'));
-      expect(words[19].isWordsOfJesus, isFalse);
+      expect(wjIds.contains(words[19].id), isFalse);
       expect(words[20].text, equals('John'));
-      expect(words[20].isWordsOfJesus, isFalse);
+      expect(wjIds.contains(words[20].id), isFalse);
       expect(words[21].text, equals('permitted'));
-      expect(words[21].isWordsOfJesus, isFalse);
+      expect(wjIds.contains(words[21].id), isFalse);
       expect(words[22].text, equals('Him.'));
-      expect(words[22].isWordsOfJesus, isFalse);
+      expect(wjIds.contains(words[22].id), isFalse);
+
+      // Also verify via UsfmParser.parse
+      final passage = UsfmParser.parse([line]);
+      expect(passage.wordsOfJesusIds, equals(wjIds));
+      expect(passage.paragraphs.first.wordsOfJesusIds, equals(wjIds));
     });
 
     test('Word IDs and word count are identical with or without wj tags', () {
@@ -81,7 +87,7 @@ void main() {
       }
     });
 
-    test('Footnotes inside wj span preserve isWordsOfJesus across footnote', () {
+    test('Footnotes inside wj span preserve wordsOfJesus across footnote', () {
       final line = UsfmLine(
         bookChapterVerse: 44001004,
         text:
@@ -89,44 +95,45 @@ void main() {
         format: ParagraphFormat.p,
       );
 
-      final elements = UsfmParser.getWords(line, 0);
+      final wjIds = <int>{};
+      final elements = UsfmParser.getWords(line, 0, wordsOfJesusIds: wjIds);
       final words = elements.whereType<Word>().toList();
 
       expect(words[0].text, equals('He'));
-      expect(words[0].isWordsOfJesus, isFalse);
+      expect(wjIds.contains(words[0].id), isFalse);
       expect(words[1].text, equals('commanded'));
-      expect(words[1].isWordsOfJesus, isFalse);
+      expect(wjIds.contains(words[1].id), isFalse);
       expect(words[2].text, equals('them:'));
-      expect(words[2].isWordsOfJesus, isFalse);
+      expect(wjIds.contains(words[2].id), isFalse);
 
       expect(words[3].text, equals('“Do'));
-      expect(words[3].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[3].id), isTrue);
       expect(words[4].text, equals('not'));
-      expect(words[4].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[4].id), isTrue);
       expect(words[5].text, equals('leave'));
-      expect(words[5].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[5].id), isTrue);
       expect(words[6].text, equals('Jerusalem,'));
-      expect(words[6].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[6].id), isTrue);
 
       // Footnote exists
       expect(elements.whereType<Footnote>().length, equals(1));
 
       // After footnote, words remain marked as Words of Jesus
       expect(words[7].text, equals('but'));
-      expect(words[7].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[7].id), isTrue);
       expect(words[8].text, equals('wait'));
-      expect(words[8].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[8].id), isTrue);
       expect(words[9].text, equals('for'));
-      expect(words[9].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[9].id), isTrue);
       expect(words[10].text, equals('the'));
-      expect(words[10].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[10].id), isTrue);
       expect(words[11].text, equals('gift.”'));
-      expect(words[11].isWordsOfJesus, isTrue);
+      expect(wjIds.contains(words[11].id), isTrue);
     });
   });
 
   group('UsfmWidget Words of Jesus Rendering', () {
-    testWidgets('Renders wordsOfJesusStyle when provided and isWordsOfJesus is true', (tester) async {
+    testWidgets('Renders wordsOfJesusStyle when provided and word is in wordsOfJesusIds', (tester) async {
       const wjRed = Color(0xFFB71C1C);
       const normalBlack = Color(0xFF000000);
 
