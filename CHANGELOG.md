@@ -1,3 +1,7 @@
+## 0.14.1 - 2026-09-22
+
+- Fix em dash space.
+
 ## 0.14.0 - 2026-09-19
 
 - Refactor words of Jesus implementation (USFM widgets only).
