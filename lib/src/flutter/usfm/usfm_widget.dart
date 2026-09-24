@@ -509,7 +509,8 @@ class _UsfmWidgetState extends State<UsfmWidget> {
         if (i + 1 < elements.length) {
           final next = elements[i + 1];
           final isPunct = next is Word && isPunctuation(next.text);
-          final isCurrentPunct = current is Word && isPunctuation(current.text);
+          final isCurrentPunct = current is Word &&
+              (isPunctuation(current.text) || current.text.endsWith('—'));
           if (next is! Footnote && !isPunct && !isCurrentPunct) {
             widgets.add(SpaceWidget(width: spaceWidth));
           }
