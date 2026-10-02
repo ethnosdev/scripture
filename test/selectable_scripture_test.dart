@@ -284,4 +284,221 @@ void main() {
       },
     );
   });
+
+  group('Auto-scrolling when dragging selection handles', () {
+    testWidgets(
+      'Dragging end handle beyond bottom edge auto-scrolls down and expands selection',
+      (tester) async {
+        final controller = ScriptureSelectionController();
+        final scrollController = ScrollController();
+        addTearDown(scrollController.dispose);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 300,
+                height: 100,
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: SelectableScripture(
+                    controller: controller,
+                    child: PassageWidget(
+                      children: [
+                        for (int i = 1; i <= 20; i++)
+                          ParagraphWidget(
+                            selectionController: controller,
+                            children: [
+                              WordWidget(text: 'Paragraph $i Word', id: i),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Select words 1 to 2
+        controller.selectRange(1, 2);
+        await tester.pumpAndSettle();
+
+        expect(scrollController.offset, equals(0.0));
+
+        final passageFinder = find.byType(PassageWidget);
+        final renderPassage =
+            tester.renderObject(passageFinder) as RenderPassage;
+        final geom2 = renderPassage.getWordGeometry(2)!;
+        final handlePoint = renderPassage.localToGlobal(
+          Offset(geom2.rect.right + 5, geom2.rect.bottom + 10),
+        );
+
+        // Start drag on handle
+        final gesture = await tester.startGesture(handlePoint);
+        await tester.pump();
+
+        // Drag below viewport (viewport height is 100, y=150 is offscreen)
+        await gesture.moveTo(const Offset(100, 150));
+        await tester.pump();
+
+        // Auto-scroller should tick and scroll down
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(scrollController.offset, greaterThan(0.0));
+        expect(controller.endId, greaterThan(2));
+
+        // Release drag
+        await gesture.up();
+        await tester.pumpAndSettle();
+
+        final offsetAfterUp = scrollController.offset;
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(scrollController.offset, equals(offsetAfterUp));
+      },
+    );
+
+    testWidgets(
+      'Dragging start handle beyond top edge auto-scrolls up and expands selection',
+      (tester) async {
+        final controller = ScriptureSelectionController();
+        final scrollController = ScrollController();
+        addTearDown(scrollController.dispose);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 300,
+                height: 100,
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: SelectableScripture(
+                    controller: controller,
+                    child: PassageWidget(
+                      children: [
+                        for (int i = 1; i <= 20; i++)
+                          ParagraphWidget(
+                            selectionController: controller,
+                            children: [
+                              WordWidget(text: 'Paragraph $i Word', id: i),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // Pre-scroll down
+        scrollController.jumpTo(60.0);
+        await tester.pumpAndSettle();
+        expect(scrollController.offset, equals(60.0));
+
+        // Select words 10 to 11
+        controller.selectRange(10, 11);
+        await tester.pumpAndSettle();
+
+        final passageFinder = find.byType(PassageWidget);
+        final renderPassage =
+            tester.renderObject(passageFinder) as RenderPassage;
+        final geom10 = renderPassage.getWordGeometry(10)!;
+        final handlePoint = renderPassage.localToGlobal(
+          Offset(geom10.rect.left + 5, geom10.rect.bottom + 10),
+        );
+
+        final gesture = await tester.startGesture(handlePoint);
+        await tester.pump();
+
+        // Drag above viewport (global y = -20 is offscreen)
+        await gesture.moveTo(const Offset(100, -20));
+        await tester.pump();
+
+        // Ticker should auto-scroll up
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(scrollController.offset, lessThan(60.0));
+        expect(controller.startId, lessThan(10));
+
+        await gesture.up();
+        await tester.pumpAndSettle();
+      },
+    );
+
+    testWidgets(
+      'Selected word and handle remain visible onscreen when dragging offscreen',
+      (tester) async {
+        final controller = ScriptureSelectionController();
+        final scrollController = ScrollController();
+        addTearDown(scrollController.dispose);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 300,
+                height: 120,
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: SelectableScripture(
+                    controller: controller,
+                    child: PassageWidget(
+                      children: [
+                        for (int i = 1; i <= 20; i++)
+                          ParagraphWidget(
+                            selectionController: controller,
+                            children: [
+                              WordWidget(text: 'Paragraph $i Word', id: i),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        controller.selectRange(1, 1);
+        await tester.pumpAndSettle();
+
+        final passageFinder = find.byType(PassageWidget);
+        final renderPassage =
+            tester.renderObject(passageFinder) as RenderPassage;
+        final geom1 = renderPassage.getWordGeometry(1)!;
+        final handlePoint = renderPassage.localToGlobal(
+          Offset(geom1.rect.right + 5, geom1.rect.bottom + 10),
+        );
+
+        final gesture = await tester.startGesture(handlePoint);
+        await tester.pump();
+
+        // Drag far offscreen (y = 500 when viewport height is 120)
+        await gesture.moveTo(const Offset(100, 500));
+        await tester.pump();
+
+        // Run auto-scroll for a bit
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // Check current end word geometry in global coordinates
+        final endId = controller.endId!;
+        final endGeom = renderPassage.getWordGeometry(endId)!;
+        final endHandleAnchor = renderPassage.localToGlobal(
+          Offset(endGeom.rect.right, endGeom.rect.bottom),
+        );
+
+        // The handle's anchor must be within the 120px viewport height
+        expect(endHandleAnchor.dy, lessThanOrEqualTo(120.0));
+        expect(endHandleAnchor.dy, greaterThanOrEqualTo(0.0));
+
+        await gesture.up();
+        await tester.pumpAndSettle();
+      },
+    );
+  });
 }

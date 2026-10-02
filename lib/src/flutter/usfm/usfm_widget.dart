@@ -29,6 +29,8 @@ class UsfmWidget extends StatefulWidget {
   final AmbiguousTapCallback? onAmbiguousTapped;
   final TextStyle? noteMarkerStyle;
   final VoidCallback? onTapWhitespace;
+  final bool enableAutoScroll;
+  final EdgeInsets autoScrollEdgeInsets;
 
   const UsfmWidget({
     super.key,
@@ -50,6 +52,8 @@ class UsfmWidget extends StatefulWidget {
     this.onNoteTapped,
     this.onAmbiguousTapped,
     this.noteMarkerStyle,
+    this.enableAutoScroll = true,
+    this.autoScrollEdgeInsets = EdgeInsets.zero,
   });
 
   @override
@@ -124,6 +128,8 @@ class _UsfmWidgetState extends State<UsfmWidget> {
       controller: widget.selectionController,
       handleColor: widget.selectionHandleColor,
       showHandles: widget.showSelectionHandles,
+      enableAutoScroll: widget.enableAutoScroll,
+      autoScrollEdgeInsets: widget.autoScrollEdgeInsets,
       onTapWhitespace: widget.onTapWhitespace,
       onWordTapped: (int wordId) {
         final hasFootnote = _wordFootnoteMap.containsKey(wordId);

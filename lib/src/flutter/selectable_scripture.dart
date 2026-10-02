@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'passage.dart';
 import 'selection_controller.dart';
 
@@ -16,6 +17,8 @@ class SelectableScripture extends StatefulWidget {
   final VoidCallback? onTapWhitespace;
   final Color? handleColor;
   final bool showHandles;
+  final bool enableAutoScroll;
+  final EdgeInsets autoScrollEdgeInsets;
 
   const SelectableScripture({
     super.key,
@@ -26,17 +29,47 @@ class SelectableScripture extends StatefulWidget {
     this.onTapWhitespace,
     this.handleColor,
     this.showHandles = true,
+    this.enableAutoScroll = true,
+    this.autoScrollEdgeInsets = EdgeInsets.zero,
   });
 
   @override
   State<SelectableScripture> createState() => _SelectableScriptureState();
 }
 
-class _SelectableScriptureState extends State<SelectableScripture> {
+class _SelectableScriptureState extends State<SelectableScripture>
+    with SingleTickerProviderStateMixin {
   final GlobalKey _passageKey = GlobalKey();
   _DragMode _dragMode = _DragMode.none;
   int? _fixedAnchor;
   Offset _dragOffsetDelta = Offset.zero;
+  Offset? _lastDragGlobalPosition;
+  ScrollableState? _scrollable;
+
+  late final Ticker _ticker = createTicker(_onTick);
+  Duration _lastTickElapsed = Duration.zero;
+
+  static const double _kAutoScrollThreshold = 40.0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scrollable = Scrollable.maybeOf(context);
+  }
+
+  @override
+  void didUpdateWidget(covariant SelectableScripture oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.enableAutoScroll && _ticker.isActive) {
+      _stopAutoScroll();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,15 +103,9 @@ class _SelectableScriptureState extends State<SelectableScripture> {
                     ..onStart = _handlePanStart
                     ..onUpdate = _handlePanUpdate
                     ..onEnd = (_) {
-                      _dragMode = _DragMode.none;
-                      _fixedAnchor = null;
-                      _dragOffsetDelta = Offset.zero;
+                      _handlePanEnd();
                     }
-                    ..onCancel = () {
-                      _dragMode = _DragMode.none;
-                      _fixedAnchor = null;
-                      _dragOffsetDelta = Offset.zero;
-                    };
+                    ..onCancel = _handlePanEnd;
                 },
               ),
         },
@@ -174,6 +201,165 @@ class _SelectableScriptureState extends State<SelectableScripture> {
     }
   }
 
+  Rect? _getViewportGlobalRect() {
+    final scrollable = _scrollable;
+    if (scrollable == null) return null;
+    final renderBox = scrollable.context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return null;
+    final origin = renderBox.localToGlobal(Offset.zero);
+    return origin & renderBox.size;
+  }
+
+  bool _isInAutoScrollZone() {
+    if (!widget.enableAutoScroll || _scrollable == null || _lastDragGlobalPosition == null) {
+      return false;
+    }
+    final viewportRect = _getViewportGlobalRect();
+    if (viewportRect == null || viewportRect.width <= 0 || viewportRect.height <= 0) {
+      return false;
+    }
+
+    final insets = widget.autoScrollEdgeInsets;
+    final visibleRect = Rect.fromLTRB(
+      viewportRect.left + insets.left,
+      viewportRect.top + insets.top,
+      viewportRect.right - insets.right,
+      viewportRect.bottom - insets.bottom,
+    );
+
+    final pos = _lastDragGlobalPosition!;
+    return pos.dy > visibleRect.bottom - _kAutoScrollThreshold ||
+        pos.dy < visibleRect.top + _kAutoScrollThreshold;
+  }
+
+  double _computeVelocity(double overshoot) {
+    final progress = (overshoot / _kAutoScrollThreshold).clamp(0.0, 5.0);
+    return 150.0 + progress * 150.0;
+  }
+
+  bool _performScrollTick(double dt) {
+    final scrollable = _scrollable;
+    if (scrollable == null || !scrollable.position.hasPixels) return false;
+    final position = scrollable.position;
+    final globalPosition = _lastDragGlobalPosition;
+    if (globalPosition == null) return false;
+
+    final viewportRect = _getViewportGlobalRect();
+    if (viewportRect == null || viewportRect.width <= 0 || viewportRect.height <= 0) {
+      return false;
+    }
+
+    final insets = widget.autoScrollEdgeInsets;
+    final visibleRect = Rect.fromLTRB(
+      viewportRect.left + insets.left,
+      viewportRect.top + insets.top,
+      viewportRect.right - insets.right,
+      viewportRect.bottom - insets.bottom,
+    );
+
+    double delta = 0.0;
+
+    if (globalPosition.dy > visibleRect.bottom - _kAutoScrollThreshold) {
+      final overshoot = globalPosition.dy - (visibleRect.bottom - _kAutoScrollThreshold);
+      final velocity = _computeVelocity(overshoot);
+      delta = velocity * dt;
+    } else if (globalPosition.dy < visibleRect.top + _kAutoScrollThreshold) {
+      final overshoot = (visibleRect.top + _kAutoScrollThreshold) - globalPosition.dy;
+      final velocity = _computeVelocity(overshoot);
+      delta = -velocity * dt;
+    }
+
+    if (delta == 0.0) return false;
+
+    final oldPixels = position.pixels;
+    final newPixels = (oldPixels + delta).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+
+    if (newPixels == oldPixels) {
+      return false;
+    }
+
+    position.jumpTo(newPixels);
+    return true;
+  }
+
+  void _onTick(Duration elapsed) {
+    if (!mounted || _dragMode == _DragMode.none || _fixedAnchor == null || _lastDragGlobalPosition == null) {
+      _stopAutoScroll();
+      return;
+    }
+    final dt = _lastTickElapsed == Duration.zero
+        ? 0.016
+        : (elapsed - _lastTickElapsed).inMicroseconds / 1000000.0;
+    _lastTickElapsed = elapsed;
+
+    final scrolled = _performScrollTick(dt);
+    if (scrolled) {
+      _updateSelectionFromDrag();
+    } else {
+      if (!_isInAutoScrollZone()) {
+        _stopAutoScroll();
+      }
+    }
+  }
+
+  void _stopAutoScroll() {
+    if (_ticker.isActive) {
+      _ticker.stop();
+    }
+    _lastTickElapsed = Duration.zero;
+  }
+
+  void _updateSelectionFromDrag() {
+    if (_dragMode == _DragMode.none || _fixedAnchor == null || _lastDragGlobalPosition == null) {
+      return;
+    }
+
+    final renderObject = _passageKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderPassage || !renderObject.hasSize) return;
+
+    final globalPosition = _lastDragGlobalPosition!;
+    final effectiveGlobal = globalPosition - _dragOffsetDelta;
+
+    final viewportRect = _getViewportGlobalRect();
+    Offset targetGlobal = effectiveGlobal;
+
+    if (viewportRect != null) {
+      final insets = widget.autoScrollEdgeInsets;
+      final visibleRect = Rect.fromLTRB(
+        viewportRect.left + insets.left,
+        viewportRect.top + insets.top,
+        viewportRect.right - insets.right,
+        viewportRect.bottom - insets.bottom,
+      );
+
+      final safeTop = visibleRect.top + 16.0;
+      final safeBottom = visibleRect.bottom - (kSelectionHandleSize + 8.0);
+      final safeLeft = visibleRect.left + 8.0;
+      final safeRight = visibleRect.right - 8.0;
+
+      if (safeTop <= safeBottom && safeLeft <= safeRight) {
+        targetGlobal = Offset(
+          effectiveGlobal.dx.clamp(safeLeft, safeRight),
+          effectiveGlobal.dy.clamp(safeTop, safeBottom),
+        );
+      }
+    }
+
+    final localOffset = renderObject.globalToLocal(targetGlobal);
+    final hitWordId = renderObject.getWordAtOrNearOffset(localOffset);
+
+    if (hitWordId != null && hitWordId >= 0) {
+      if (_dragMode == _DragMode.start) {
+        widget.controller.selectRange(hitWordId, _fixedAnchor!);
+      } else {
+        widget.controller.selectRange(_fixedAnchor!, hitWordId);
+      }
+    }
+  }
+
   void _handlePanStart(DragStartDetails details) {
     if (!widget.controller.hasSelection) return;
 
@@ -215,26 +401,39 @@ class _SelectableScriptureState extends State<SelectableScripture> {
       _fixedAnchor = startId;
       _dragOffsetDelta = endAnchor != null ? localOffset - endAnchor : Offset.zero;
     }
+
+    _lastDragGlobalPosition = details.globalPosition;
+
+    if (_isInAutoScrollZone()) {
+      if (!_ticker.isActive) {
+        _lastTickElapsed = Duration.zero;
+        _ticker.start();
+      }
+    }
   }
 
   void _handlePanUpdate(DragUpdateDetails details) {
     if (_dragMode == _DragMode.none || _fixedAnchor == null) return;
 
-    final renderObject = _passageKey.currentContext?.findRenderObject();
-    if (renderObject is! RenderPassage || !renderObject.hasSize) return;
+    _lastDragGlobalPosition = details.globalPosition;
+    _updateSelectionFromDrag();
 
-    final localOffset = renderObject.globalToLocal(details.globalPosition);
-    final effectiveOffset = localOffset - _dragOffsetDelta;
-
-    final hitWordId = renderObject.getWordAtOrNearOffset(effectiveOffset);
-
-    if (hitWordId != null && hitWordId >= 0) {
-      if (_dragMode == _DragMode.start) {
-        widget.controller.selectRange(hitWordId, _fixedAnchor!);
-      } else {
-        widget.controller.selectRange(_fixedAnchor!, hitWordId);
+    if (_isInAutoScrollZone()) {
+      if (!_ticker.isActive) {
+        _lastTickElapsed = Duration.zero;
+        _ticker.start();
       }
+    } else {
+      _stopAutoScroll();
     }
+  }
+
+  void _handlePanEnd() {
+    _stopAutoScroll();
+    _dragMode = _DragMode.none;
+    _fixedAnchor = null;
+    _dragOffsetDelta = Offset.zero;
+    _lastDragGlobalPosition = null;
   }
 }
 
