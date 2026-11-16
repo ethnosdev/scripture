@@ -1,6 +1,6 @@
 name: scripture
 description: A text layout engine optimized for USFM Bible data, featuring custom paragraph formatting and word-level interactivity.
-version: 0.15.0
+version: 0.16.0
 repository: https://github.com/ethnosdev/scripture
 
 environment:
@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  material_ui: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

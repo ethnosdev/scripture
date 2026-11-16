@@ -1,3 +1,7 @@
+## 0.16.0 - 2026-11-16
+
+- Migrate to material_ui package.
+
 ## 0.15.0 - 2026-10-02
 
 - Enable scrolling when selecting offscreen.
